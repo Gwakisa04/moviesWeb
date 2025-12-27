@@ -1,0 +1,31 @@
+.genre-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.genre-btn {
+  padding: 10px 20px;
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 20px;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.genre-btn:hover {
+  background-color: #2a2a2a;
+  color: #fff;
+  border-color: #444;
+}
+
+.genre-btn.active {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
