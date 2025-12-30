@@ -1,29 +1,7 @@
 .app {
-  display: flex;
   min-height: 100vh;
-  background-color: #1a1a1a;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 260px;
-  display: flex;
-  flex-direction: column;
-  background-color: #1a1a1a;
-}
-
-.content-area {
-  padding: 20px 40px;
-  flex: 1;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-  }
-  
-  .content-area {
-    padding: 20px;
-  }
+  background-color: #0a0a0a;
+  color: #ffffff;
+  position: relative;
 }
 

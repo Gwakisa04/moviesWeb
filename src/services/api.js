@@ -68,3 +68,25 @@ export const fetchPopularMoviesEnriched = async (limit = 20) => {
   }
 }
 
+export const getMovieStreaming = async (imdbId) => {
+  try {
+    const response = await api.get(`/movies/${imdbId}/streaming`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching streaming sources:', error)
+    throw error
+  }
+}
+
+export const getMovieYouTube = async (imdbId, includeMusic = true) => {
+  try {
+    const response = await api.get(`/movies/${imdbId}/youtube`, { 
+      params: { include_music: includeMusic } 
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching YouTube videos:', error)
+    throw error
+  }
+}
+
