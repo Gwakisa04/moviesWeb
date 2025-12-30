@@ -3,5 +3,18 @@
   background-color: #0a0a0a;
   color: #ffffff;
   position: relative;
+  display: flex;
+}
+
+.app-content {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    margin-left: 0;
+  }
 }
 

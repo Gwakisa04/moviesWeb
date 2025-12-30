@@ -3,6 +3,9 @@
   background: #0a0a0a;
   color: #fff;
   padding-bottom: 80px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .home-header {

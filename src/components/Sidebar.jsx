@@ -1,76 +1,61 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import './Sidebar.css'
 
 const Sidebar = () => {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+    return location.pathname.startsWith(path)
+  }
+
   return (
     <div className="sidebar">
       <div className="sidebar-content">
         <div className="sidebar-section">
-          <div className="nav-item active">
+          <div 
+            className={`nav-item ${isActive('/') ? 'active' : ''}`}
+            onClick={() => navigate('/')}
+          >
             <span className="nav-icon">🏠</span>
             <span>Home</span>
           </div>
-          <div className="nav-item">
-            <span className="nav-icon">🔥</span>
-            <span>Trending</span>
-          </div>
-          <div className="nav-item">
-            <span className="nav-icon">⏰</span>
-            <span>Coming Soon</span>
-          </div>
-          <div className="nav-item active-category">
+          <div 
+            className={`nav-item ${isActive('/browse') ? 'active' : ''}`}
+            onClick={() => navigate('/browse')}
+          >
             <span className="nav-icon">🔍</span>
-            <span>Categories</span>
-            <div className="active-indicator"></div>
+            <span>Browse</span>
           </div>
-        </div>
-
-        <div className="sidebar-section">
-          <div className="section-title">Your Activity</div>
-          <div className="nav-item">
-            <span className="nav-icon">🔄</span>
-            <span>History</span>
-          </div>
-          <div className="nav-item">
-            <span className="nav-icon">🔖</span>
-            <span>Saved</span>
-          </div>
-          <div className="nav-item">
+          <div 
+            className={`nav-item ${isActive('/library') ? 'active' : ''}`}
+            onClick={() => navigate('/library')}
+          >
             <span className="nav-icon">📚</span>
-            <span>My Library</span>
+            <span>Library</span>
           </div>
-          <div className="nav-item">
-            <span className="nav-icon">⬇️</span>
-            <span>Downloads</span>
+          <div 
+            className={`nav-item ${isActive('/manga') ? 'active' : ''}`}
+            onClick={() => navigate('/manga')}
+          >
+            <span className="nav-icon">📖</span>
+            <span>Manga</span>
           </div>
-        </div>
-
-        <div className="sidebar-section">
-          <div className="section-title">Settings & Account</div>
-          <div className="nav-item">
-            <span className="nav-icon">⚙️</span>
-            <span>Settings</span>
-          </div>
-          <div className="nav-item">
-            <span className="nav-icon">👤</span>
-            <span>Your Account</span>
-          </div>
-        </div>
-
-        <div className="sidebar-section">
-          <div className="section-title">Help & Information</div>
-          <div className="nav-item">
-            <span className="nav-icon">❓</span>
-            <span>Help & Information</span>
-          </div>
-          <div className="nav-item logout">
-            <span className="nav-icon">🚪</span>
-            <span>Log Out</span>
+          <div 
+            className={`nav-item ${isActive('/music') ? 'active' : ''}`}
+            onClick={() => navigate('/music')}
+          >
+            <span className="nav-icon">🎵</span>
+            <span>Music</span>
           </div>
         </div>
 
         <div className="sidebar-footer">
-          <p>@2025 EVC</p>
+          <p>@2025 MovieGo</p>
         </div>
       </div>
     </div>

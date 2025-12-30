@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getPopularActors, getActorDetails } from '../services/api'
+import { getPopularActors, getActorDetails, searchActors } from '../services/api'
 import './Library.css'
 
 const Library = () => {
@@ -8,12 +8,16 @@ const Library = () => {
   const [watchlist, setWatchlist] = useState([])
   const [actors, setActors] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searching, setSearching] = useState(false)
   const [selectedActor, setSelectedActor] = useState(null)
   const [showActorDetail, setShowActorDetail] = useState(false)
 
   useEffect(() => {
-    loadActors()
-  }, [])
+    if (!searchQuery) {
+      loadActors()
+    }
+  }, [searchQuery])
 
   const loadActors = async () => {
     try {
@@ -26,6 +30,29 @@ const Library = () => {
       console.error('Error loading actors:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) {
+      loadActors()
+      return
+    }
+
+    try {
+      setSearching(true)
+      const data = await searchActors(searchQuery, 1)
+      if (data?.results) {
+        setActors(data.results)
+      } else {
+        setActors([])
+      }
+    } catch (error) {
+      console.error('Error searching actors:', error)
+      setActors([])
+    } finally {
+      setSearching(false)
     }
   }
 
@@ -59,7 +86,21 @@ const Library = () => {
       </section>
 
       <section className="library-section">
-        <h2>Popular Actors</h2>
+        <div className="section-header">
+          <h2>Actors</h2>
+          <form className="actor-search-form" onSubmit={handleSearch}>
+            <input
+              type="text"
+              placeholder="Search actors..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="actor-search-input"
+            />
+            <button type="submit" className="actor-search-btn">
+              {searching ? '...' : '🔍'}
+            </button>
+          </form>
+        </div>
         {loading ? (
           <div className="loading-state">
             <div className="spinner"></div>
@@ -81,15 +122,17 @@ const Library = () => {
                 ) : (
                   <div className="actor-avatar">{actor.name?.charAt(0) || '?'}</div>
                 )}
-                <span className="actor-name">{actor.name}</span>
-                {actor.known_for_department && (
-                  <span className="actor-department">{actor.known_for_department}</span>
-                )}
+                <div className="actor-info">
+                  <span className="actor-name">{actor.name}</span>
+                  {actor.known_for_department && (
+                    <span className="actor-department">{actor.known_for_department}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="empty-state">No actors available</p>
+          <p className="empty-state">No actors found. {searchQuery ? 'Try a different search.' : 'Loading...'}</p>
         )}
       </section>
 
