@@ -6,6 +6,8 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .home-header {
@@ -106,6 +108,10 @@
 
 .home-content {
   padding: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .featured-banner {
@@ -114,6 +120,9 @@
   overflow: hidden;
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .banner-backdrop {
@@ -179,6 +188,9 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .movies-scroll::-webkit-scrollbar {
@@ -194,6 +206,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -223,18 +238,34 @@
 }
 
 @media (max-width: 768px) {
+  .home-content {
+    padding: 15px;
+  }
+  
   .banner-title {
-    font-size: 32px;
+    font-size: 28px;
   }
   
   .banner-backdrop {
-    min-height: 300px;
-    padding: 20px;
+    min-height: 250px;
+    padding: 15px;
+  }
+  
+  .banner-tagline {
+    font-size: 14px;
   }
   
   .movies-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 15px;
+  }
+  
+  .header-content {
+    padding: 12px 15px;
+  }
+  
+  .content-tabs {
+    padding: 0 15px;
   }
 }
 

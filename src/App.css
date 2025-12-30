@@ -8,13 +8,21 @@
 
 .app-content {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 80px;
   min-height: 100vh;
+  width: calc(100% - 80px);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {
   .app-content {
     margin-left: 0;
+    width: 100%;
+  }
+  
+  .sidebar {
+    display: none;
   }
 }
 
