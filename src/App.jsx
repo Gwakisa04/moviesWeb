@@ -21,19 +21,35 @@ function App() {
   }, [])
 
   useEffect(() => {
+    // Reset genre and reload data when switching tabs
+    setActiveGenre('All')
+    setSearchQuery('')
+    loadInitialData()
+  }, [activeTab])
+
+  useEffect(() => {
     if (searchQuery) {
       handleSearch(searchQuery)
     } else {
       loadMoviesByGenre()
     }
-  }, [activeGenre, activeTab, searchQuery])
+  }, [activeGenre, searchQuery])
+
+  // Map tab names to API types
+  const getTypeFromTab = (tab) => {
+    if (tab === 'TV Series') return 'series'
+    if (tab === 'Anime') return 'anime'
+    if (tab === 'Movies') return 'movie'
+    return null
+  }
 
   const loadInitialData = async () => {
     try {
       setLoading(true)
+      const type = getTypeFromTab(activeTab)
       const [popularData, newReleasesData] = await Promise.all([
-        fetchPopularMovies(20),
-        fetchNewReleases(6)
+        fetchPopularMovies(20, type),
+        fetchNewReleases(6, type)
       ])
       
       if (popularData?.Search) {
@@ -50,18 +66,24 @@ function App() {
   }
 
   const loadMoviesByGenre = async () => {
+    const type = getTypeFromTab(activeTab)
+    
     if (activeGenre === 'All') {
       try {
-        const data = await fetchPopularMovies(20)
+        setLoading(true)
+        const data = await fetchPopularMovies(20, type)
         if (data?.Search) {
           setMovies(data.Search)
         }
       } catch (error) {
         console.error('Error loading movies:', error)
+      } finally {
+        setLoading(false)
       }
     } else {
       try {
-        const data = await searchMovies(activeGenre, 1)
+        setLoading(true)
+        const data = await searchMovies(activeGenre, 1, null, type)
         if (data?.Search) {
           setMovies(data.Search)
         } else {
@@ -70,6 +92,8 @@ function App() {
       } catch (error) {
         console.error('Error loading genre movies:', error)
         setMovies([])
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -82,7 +106,8 @@ function App() {
 
     try {
       setLoading(true)
-      const data = await searchMovies(query, 1)
+      const type = getTypeFromTab(activeTab)
+      const data = await searchMovies(query, 1, null, type)
       if (data?.Search) {
         setMovies(data.Search)
       } else {

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://moviepy-74vk.onrender.com/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -34,9 +34,11 @@ export const getMovieById = async (imdbId) => {
   }
 }
 
-export const fetchPopularMovies = async (limit = 20) => {
+export const fetchPopularMovies = async (limit = 20, type = null) => {
   try {
-    const response = await api.get('/movies/popular', { params: { limit } })
+    const params = { limit }
+    if (type) params.type = type
+    const response = await api.get('/movies/popular', { params })
     return response.data
   } catch (error) {
     console.error('Error fetching popular movies:', error)
@@ -44,9 +46,11 @@ export const fetchPopularMovies = async (limit = 20) => {
   }
 }
 
-export const fetchNewReleases = async (limit = 6) => {
+export const fetchNewReleases = async (limit = 6, type = null) => {
   try {
-    const response = await api.get('/movies/new-releases', { params: { limit } })
+    const params = { limit }
+    if (type) params.type = type
+    const response = await api.get('/movies/new-releases', { params })
     return response.data
   } catch (error) {
     console.error('Error fetching new releases:', error)
