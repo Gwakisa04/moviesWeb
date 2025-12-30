@@ -10,7 +10,8 @@ const BottomNavigation = () => {
     { id: 'home', label: 'Home', icon: '🏠', path: '/' },
     { id: 'browse', label: 'Browse', icon: '🔍', path: '/browse' },
     { id: 'library', label: 'Library', icon: '📚', path: '/library' },
-    { id: 'manga', label: 'Manga', icon: '📖', path: '/manga' }
+    { id: 'manga', label: 'Manga', icon: '📖', path: '/manga' },
+    { id: 'music', label: 'Music', icon: '🎵', path: '/music' }
   ]
 
   const isActive = (path) => {

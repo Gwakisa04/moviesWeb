@@ -20,6 +20,17 @@
   color: #FFD700;
 }
 
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #FFD700;
+  margin: 0;
+}
+
 .music-search-form {
   display: flex;
   gap: 10px;

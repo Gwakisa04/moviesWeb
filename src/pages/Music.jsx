@@ -1,26 +1,53 @@
-import React, { useState } from 'react'
-import { searchMusicVideos } from '../services/api'
+import React, { useState, useEffect } from 'react'
+import { searchMusicVideos, getTrendingMusicVideos } from '../services/api'
 import './Music.css'
 
 const Music = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [videos, setVideos] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [showPlayer, setShowPlayer] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
 
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
+  useEffect(() => {
+    loadTrendingVideos()
+  }, [])
 
+  const loadTrendingVideos = async () => {
     try {
       setLoading(true)
-      const data = await searchMusicVideos(searchQuery, 50)
+      setIsSearching(false)
+      const data = await getTrendingMusicVideos(50)
       if (data?.videos) {
         setVideos(data.videos)
       }
     } catch (error) {
+      console.error('Error loading trending videos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) {
+      loadTrendingVideos()
+      return
+    }
+
+    try {
+      setLoading(true)
+      setIsSearching(true)
+      const data = await searchMusicVideos(searchQuery, 50)
+      if (data?.videos) {
+        setVideos(data.videos)
+      } else {
+        setVideos([])
+      }
+    } catch (error) {
       console.error('Error searching music videos:', error)
+      setVideos([])
     } finally {
       setLoading(false)
     }
@@ -52,25 +79,32 @@ const Music = () => {
           <div className="spinner"></div>
         </div>
       ) : videos.length > 0 ? (
-        <div className="videos-grid">
-          {videos.map((video, i) => (
-            <div key={i} className="video-card" onClick={() => handlePlayVideo(video)}>
-              <div className="video-thumbnail">
-                {video.thumbnail && (
-                  <img src={video.thumbnail} alt={video.title} />
-                )}
-                <div className="play-overlay">▶</div>
-              </div>
-              <div className="video-info">
-                <h4>{video.title}</h4>
-                <p>{video.channel_title}</p>
-              </div>
+        <>
+          {!isSearching && (
+            <div className="section-header">
+              <h2>Trending Music Videos</h2>
             </div>
-          ))}
-        </div>
+          )}
+          <div className="videos-grid">
+            {videos.map((video, i) => (
+              <div key={i} className="video-card" onClick={() => handlePlayVideo(video)}>
+                <div className="video-thumbnail">
+                  {video.thumbnail && (
+                    <img src={video.thumbnail} alt={video.title} />
+                  )}
+                  <div className="play-overlay">▶</div>
+                </div>
+                <div className="video-info">
+                  <h4>{video.title}</h4>
+                  <p>{video.channel_title}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="empty-state">
-          <p>Search for music videos to get started</p>
+          <p>No videos found. Try a different search.</p>
         </div>
       )}
 

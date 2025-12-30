@@ -167,3 +167,14 @@ export const searchMusicVideos = async (query, maxResults = 20) => {
   }
 }
 
+// Get trending music videos
+export const getTrendingMusicVideos = async (maxResults = 50) => {
+  try {
+    const response = await api.get('/music/trending', { params: { max_results: maxResults } })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching trending music videos:', error)
+    throw error
+  }
+}
+

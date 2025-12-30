@@ -8,9 +8,9 @@
 
 .app-content {
   flex: 1;
-  margin-left: 80px;
+  margin-left: 72px;
   min-height: 100vh;
-  width: calc(100% - 80px);
+  width: calc(100% - 72px);
   max-width: 100%;
   overflow-x: hidden;
 }
