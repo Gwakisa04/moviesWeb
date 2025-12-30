@@ -301,6 +301,21 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.character-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FFD700;
+}
+
+.character-role {
+  font-size: 10px;
+  color: rgba(255, 215, 0, 0.7);
+  text-transform: capitalize;
+  margin-top: 4px;
+}
+
 .info-row {
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

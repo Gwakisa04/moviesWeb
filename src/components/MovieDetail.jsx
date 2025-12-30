@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getMovieById, getMovieStreaming, getMovieYouTube } from '../services/api'
+import { getMovieById, getMovieStreaming, getMovieYouTube, getAnimeById } from '../services/api'
 import './MovieDetail.css'
 
 const MovieDetail = () => {
@@ -21,6 +21,33 @@ const MovieDetail = () => {
   const loadMovieData = async () => {
     try {
       setLoading(true)
+      
+      // Check if it's an AniList ID
+      if (imdbId && imdbId.toString().startsWith('anilist_')) {
+        const anilistId = parseInt(imdbId.toString().replace('anilist_', ''))
+        if (!isNaN(anilistId)) {
+          const animeData = await getAnimeById(anilistId)
+          setMovie(animeData)
+          setStreaming(null)
+          // For AniList, use the trailer from the data
+          if (animeData?.trailer) {
+            const trailerId = animeData.trailer_youtube_id || animeData.trailer.split('watch?v=')[1]?.split('&')[0]
+            setYoutube({
+              youtube_trailers: [{
+                url: animeData.trailer,
+                embed_url: trailerId ? `https://www.youtube.com/embed/${trailerId}` : animeData.trailer.replace('watch?v=', 'embed/'),
+                title: `${animeData.Title} - Trailer`
+              }],
+              youtube_music_videos: []
+            })
+          } else {
+            setYoutube({ youtube_trailers: [], youtube_music_videos: [] })
+          }
+          return
+        }
+      }
+      
+      // Regular movie/TV show
       const [movieData, streamingData, youtubeData] = await Promise.all([
         getMovieById(imdbId),
         getMovieStreaming(imdbId).catch(() => null),
@@ -179,7 +206,28 @@ const MovieDetail = () => {
               </div>
             )}
             
-            {actors.length > 0 && (
+            {/* AniList Characters */}
+            {movie.characters && movie.characters.length > 0 && (
+              <div className="actors-section">
+                <h3>Characters</h3>
+                <div className="actors-grid">
+                  {movie.characters.slice(0, 12).map((char, i) => (
+                    <div key={i} className="actor-card">
+                      {char.image ? (
+                        <img src={char.image} alt={char.name} className="character-image" />
+                      ) : (
+                        <div className="actor-avatar">{char.name.charAt(0)}</div>
+                      )}
+                      <span className="actor-name">{char.name}</span>
+                      {char.role && <span className="character-role">{char.role}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Regular Actors (for non-AniList items) */}
+            {!movie.characters && actors.length > 0 && (
               <div className="actors-section">
                 <h3>Cast</h3>
                 <div className="actors-grid">
@@ -190,6 +238,51 @@ const MovieDetail = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* AniList Studios */}
+            {movie.studios && movie.studios.length > 0 && (
+              <div className="info-row">
+                <strong>Studios:</strong> {movie.studios.join(', ')}
+              </div>
+            )}
+            
+            {/* AniList Ratings */}
+            {movie.anilist_rating && (
+              <div className="info-row">
+                <strong>AniList Rating:</strong> {movie.anilist_rating}/100
+              </div>
+            )}
+            
+            {movie.anilist_popularity && (
+              <div className="info-row">
+                <strong>Popularity:</strong> {movie.anilist_popularity.toLocaleString()}
+              </div>
+            )}
+            
+            {/* AniList Episodes/Chapters */}
+            {movie.anilist_episodes && (
+              <div className="info-row">
+                <strong>Episodes:</strong> {movie.anilist_episodes}
+              </div>
+            )}
+            
+            {movie.anilist_chapters && (
+              <div className="info-row">
+                <strong>Chapters:</strong> {movie.anilist_chapters}
+              </div>
+            )}
+            
+            {movie.anilist_volumes && (
+              <div className="info-row">
+                <strong>Volumes:</strong> {movie.anilist_volumes}
+              </div>
+            )}
+            
+            {movie.anilist_season && (
+              <div className="info-row">
+                <strong>Season:</strong> {movie.anilist_season} {movie.anilist_seasonYear}
               </div>
             )}
             

@@ -90,3 +90,38 @@ export const getMovieYouTube = async (imdbId, includeMusic = true) => {
   }
 }
 
+// AniList API endpoints
+export const searchManga = async (query, page = 1, limit = 20) => {
+  try {
+    const response = await api.get('/manga/search', { 
+      params: { query, page, limit } 
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error searching manga:', error)
+    throw error
+  }
+}
+
+export const fetchPopularManga = async (limit = 20) => {
+  try {
+    const response = await api.get('/manga/popular', { 
+      params: { limit } 
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching popular manga:', error)
+    throw error
+  }
+}
+
+export const getAnimeById = async (anilistId) => {
+  try {
+    const response = await api.get(`/anime/${anilistId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching anime:', error)
+    throw error
+  }
+}
+

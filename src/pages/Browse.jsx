@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchPopularMovies, searchMovies } from '../services/api'
+import { fetchPopularMovies, searchMovies, fetchPopularManga, searchManga } from '../services/api'
 import MovieCard from '../components/MovieCard'
 import './Browse.css'
 
@@ -24,10 +24,21 @@ const Browse = () => {
     try {
       setLoading(true)
       let data
-      if (activeGenre === 'All') {
-        data = await fetchPopularMovies(50, activeType)
+      
+      if (activeType === 'manga') {
+        // Load manga data
+        if (activeGenre === 'All') {
+          data = await fetchPopularManga(50)
+        } else {
+          data = await searchManga(activeGenre, 1, 50)
+        }
       } else {
-        data = await searchMovies(activeGenre, 1, null, activeType)
+        // Load movies/TV/anime data
+        if (activeGenre === 'All') {
+          data = await fetchPopularMovies(50, activeType)
+        } else {
+          data = await searchMovies(activeGenre, 1, null, activeType)
+        }
       }
       
       if (data?.Search) {
@@ -49,7 +60,13 @@ const Browse = () => {
 
     try {
       setLoading(true)
-      const data = await searchMovies(searchQuery, 1, null, activeType)
+      let data
+      if (activeType === 'manga') {
+        data = await searchManga(searchQuery, 1, 50)
+      } else {
+        data = await searchMovies(searchQuery, 1, null, activeType)
+      }
+      
       if (data?.Search) {
         setMovies(data.Search)
       } else {
@@ -63,14 +80,20 @@ const Browse = () => {
   }
 
   const handleMovieClick = (movie) => {
-    // Extract IMDb ID from different sources
-    let imdbId = movie.imdbID
-    if (!imdbId || imdbId.startsWith('tmdb_') || imdbId.startsWith('tvmaze_')) {
+    // Extract ID from different sources
+    let id = movie.imdbID
+    if (!id || id.startsWith('tmdb_') || id.startsWith('tvmaze_')) {
       // Try to get from other fields
-      imdbId = movie.imdbID || movie.watchmode_imdb_id
+      id = movie.imdbID || movie.watchmode_imdb_id || movie.anilist_id
     }
-    if (imdbId && !imdbId.startsWith('tmdb_') && !imdbId.startsWith('tvmaze_')) {
-      navigate(`/movie/${imdbId}`)
+    
+    // Handle AniList IDs
+    if (id && id.toString().startsWith('anilist_')) {
+      navigate(`/movie/${id}`)
+    } else if (id && !id.toString().startsWith('tmdb_') && !id.toString().startsWith('tvmaze_')) {
+      navigate(`/movie/${id}`)
+    } else if (movie.anilist_id) {
+      navigate(`/movie/anilist_${movie.anilist_id}`)
     }
   }
 
@@ -107,6 +130,12 @@ const Browse = () => {
           onClick={() => setActiveType('anime')}
         >
           Anime
+        </button>
+        <button 
+          className={`tab ${activeType === 'manga' ? 'active' : ''}`}
+          onClick={() => setActiveType('manga')}
+        >
+          Manga
         </button>
       </div>
 

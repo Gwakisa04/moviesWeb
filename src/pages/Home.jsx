@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchPopularMovies, fetchNewReleases } from '../services/api'
+import { fetchPopularMovies, fetchNewReleases, fetchPopularManga } from '../services/api'
 import MovieCard from '../components/MovieCard'
 import './Home.css'
 
@@ -19,21 +19,32 @@ const Home = () => {
   const loadData = async () => {
     try {
       setLoading(true)
-      const type = activeTab === 'Movies' ? 'movie' : 
-                   activeTab === 'TV shows' ? 'series' : 
-                   activeTab === 'TVI' ? 'anime' : null
+      
+      if (activeTab === 'Manga') {
+        // Load manga data
+        const mangaData = await fetchPopularManga(20)
+        if (mangaData?.Search) {
+          setPopularMovies(mangaData.Search)
+          setTrendingMovies(mangaData.Search.slice(0, 5))
+        }
+        setNewReleases([])
+      } else {
+        const type = activeTab === 'Movies' ? 'movie' : 
+                     activeTab === 'TV shows' ? 'series' : 
+                     activeTab === 'Anime' ? 'anime' : null
 
-      const [popularData, newReleasesData] = await Promise.all([
-        fetchPopularMovies(20, type),
-        fetchNewReleases(6, type)
-      ])
+        const [popularData, newReleasesData] = await Promise.all([
+          fetchPopularMovies(20, type),
+          fetchNewReleases(6, type)
+        ])
 
-      if (popularData?.Search) {
-        setPopularMovies(popularData.Search)
-        setTrendingMovies(popularData.Search.slice(0, 5))
-      }
-      if (newReleasesData?.Search) {
-        setNewReleases(newReleasesData.Search)
+        if (popularData?.Search) {
+          setPopularMovies(popularData.Search)
+          setTrendingMovies(popularData.Search.slice(0, 5))
+        }
+        if (newReleasesData?.Search) {
+          setNewReleases(newReleasesData.Search)
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -43,14 +54,20 @@ const Home = () => {
   }
 
   const handleMovieClick = (movie) => {
-    // Extract IMDb ID from different sources
-    let imdbId = movie.imdbID
-    if (!imdbId || imdbId.startsWith('tmdb_') || imdbId.startsWith('tvmaze_')) {
+    // Extract ID from different sources
+    let id = movie.imdbID
+    if (!id || id.startsWith('tmdb_') || id.startsWith('tvmaze_')) {
       // Try to get from other fields
-      imdbId = movie.imdbID || movie.watchmode_imdb_id
+      id = movie.imdbID || movie.watchmode_imdb_id || movie.anilist_id
     }
-    if (imdbId && !imdbId.startsWith('tmdb_') && !imdbId.startsWith('tvmaze_')) {
-      navigate(`/movie/${imdbId}`)
+    
+    // Handle AniList IDs
+    if (id && id.toString().startsWith('anilist_')) {
+      navigate(`/movie/${id}`)
+    } else if (id && !id.toString().startsWith('tmdb_') && !id.toString().startsWith('tvmaze_')) {
+      navigate(`/movie/${id}`)
+    } else if (movie.anilist_id) {
+      navigate(`/movie/anilist_${movie.anilist_id}`)
     }
   }
 
@@ -68,7 +85,7 @@ const Home = () => {
         
         {/* Tabs */}
         <div className="content-tabs">
-          {['All', 'Trending', 'Movies', 'TV shows', 'TVI'].map((tab) => (
+          {['All', 'Trending', 'Movies', 'TV shows', 'Anime', 'Manga'].map((tab) => (
             <button
               key={tab}
               className={`tab ${activeTab === tab ? 'active' : ''}`}
