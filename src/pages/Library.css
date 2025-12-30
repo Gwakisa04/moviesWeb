@@ -41,11 +41,28 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  transition: transform 0.3s;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.actor-item:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.actor-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FFD700;
 }
 
 .actor-avatar {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: linear-gradient(135deg, #FFD700 0%, #ffed4e 100%);
   display: flex;
@@ -54,6 +71,40 @@
   font-size: 32px;
   font-weight: 700;
   color: #000;
+}
+
+.actor-name {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.actor-department {
+  font-size: 11px;
+  color: rgba(255, 215, 0, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #FFD700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .collections-grid {
@@ -79,5 +130,165 @@
   padding: 40px 20px;
   color: rgba(255, 255, 255, 0.5);
   font-size: 16px;
+}
+
+.actor-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.actor-modal-content {
+  position: relative;
+  max-width: 800px;
+  width: 100%;
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 30px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.close-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.actor-detail-header {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.actor-detail-image {
+  width: 200px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #FFD700;
+}
+
+.actor-detail-avatar {
+  width: 200px;
+  height: 300px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FFD700 0%, #ffed4e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  font-weight: 700;
+  color: #000;
+}
+
+.actor-detail-info h2 {
+  font-size: 32px;
+  margin-bottom: 15px;
+  color: #FFD700;
+}
+
+.actor-biography {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 15px;
+}
+
+.actor-birthplace,
+.actor-birthday {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 5px 0;
+}
+
+.actor-filmography h3 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #FFD700;
+}
+
+.filmography-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 15px;
+}
+
+.filmography-item {
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.filmography-item:hover {
+  transform: translateY(-5px);
+}
+
+.filmography-item img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.filmography-item p {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.music-link-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+}
+
+.music-link-section p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.music-link-btn {
+  padding: 12px 30px;
+  background: #FFD700;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.music-link-btn:hover {
+  background: #ffed4e;
+  transform: translateY(-2px);
 }
 

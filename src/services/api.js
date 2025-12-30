@@ -125,3 +125,45 @@ export const getAnimeById = async (anilistId) => {
   }
 }
 
+// Actor endpoints
+export const getPopularActors = async (page = 1) => {
+  try {
+    const response = await api.get('/actors/popular', { params: { page } })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching popular actors:', error)
+    throw error
+  }
+}
+
+export const getActorDetails = async (personId) => {
+  try {
+    const response = await api.get(`/actors/${personId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching actor details:', error)
+    throw error
+  }
+}
+
+export const searchActors = async (query, page = 1) => {
+  try {
+    const response = await api.get('/actors/search', { params: { query, page } })
+    return response.data
+  } catch (error) {
+    console.error('Error searching actors:', error)
+    throw error
+  }
+}
+
+// Music video search
+export const searchMusicVideos = async (query, maxResults = 20) => {
+  try {
+    const response = await api.get('/music/search', { params: { query, max_results: maxResults } })
+    return response.data
+  } catch (error) {
+    console.error('Error searching music videos:', error)
+    throw error
+  }
+}
+

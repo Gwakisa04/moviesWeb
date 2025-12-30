@@ -22,19 +22,19 @@ const Home = () => {
       
       if (activeTab === 'Manga') {
         // Load manga data
-        const mangaData = await fetchPopularManga(20)
+        const mangaData = await fetchPopularManga(50)
         if (mangaData?.Search) {
           setPopularMovies(mangaData.Search)
           setTrendingMovies(mangaData.Search.slice(0, 5))
         }
-        setNewReleases([])
+        setNewReleases(mangaData?.Search?.slice(0, 6) || [])
       } else {
         const type = activeTab === 'Movies' ? 'movie' : 
                      activeTab === 'TV shows' ? 'series' : 
                      activeTab === 'Anime' ? 'anime' : null
 
         const [popularData, newReleasesData] = await Promise.all([
-          fetchPopularMovies(20, type),
+          fetchPopularMovies(50, type),
           fetchNewReleases(6, type)
         ])
 

@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Browse from './pages/Browse'
 import Library from './pages/Library'
 import Profile from './pages/Profile'
+import Music from './pages/Music'
 import MovieDetail from './components/MovieDetail'
 import BottomNavigation from './components/BottomNavigation'
 import './App.css'
@@ -17,6 +18,7 @@ function App() {
           <Route path="/browse" element={<Browse />} />
           <Route path="/library" element={<Library />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/music" element={<Music />} />
           <Route path="/movie/:imdbId" element={<MovieDetail />} />
         </Routes>
         <BottomNavigation />

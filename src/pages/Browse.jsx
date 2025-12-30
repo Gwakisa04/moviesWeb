@@ -28,14 +28,14 @@ const Browse = () => {
       if (activeType === 'manga') {
         // Load manga data
         if (activeGenre === 'All') {
-          data = await fetchPopularManga(50)
+          data = await fetchPopularManga(60)
         } else {
-          data = await searchManga(activeGenre, 1, 50)
+          data = await searchManga(activeGenre, 1, 60)
         }
       } else {
         // Load movies/TV/anime data
         if (activeGenre === 'All') {
-          data = await fetchPopularMovies(50, activeType)
+          data = await fetchPopularMovies(60, activeType)
         } else {
           data = await searchMovies(activeGenre, 1, null, activeType)
         }
