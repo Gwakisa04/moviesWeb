@@ -18,11 +18,16 @@ const Manga = () => {
     try {
       setLoading(true)
       const data = await fetchPopularManga(200) // Increased to 200+
-      if (data?.Search) {
+      console.log('Manga data received:', data)
+      if (data && data.Search && Array.isArray(data.Search)) {
         setManga(data.Search)
+      } else {
+        console.warn('Invalid manga data structure:', data)
+        setManga([])
       }
     } catch (error) {
       console.error('Error loading manga:', error)
+      setManga([])
     } finally {
       setLoading(false)
     }
