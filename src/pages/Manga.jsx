@@ -17,7 +17,7 @@ const Manga = () => {
   const loadManga = async () => {
     try {
       setLoading(true)
-      const data = await fetchPopularManga(60)
+      const data = await fetchPopularManga(200) // Increased to 200+
       if (data?.Search) {
         setManga(data.Search)
       }
@@ -37,7 +37,7 @@ const Manga = () => {
 
     try {
       setLoading(true)
-      const data = await searchManga(searchQuery, 1, 60)
+      const data = await searchManga(searchQuery, 1, 200) // Increased to 200+
       if (data?.Search) {
         setManga(data.Search)
       } else {
@@ -52,16 +52,34 @@ const Manga = () => {
   }
 
   const handleMangaClick = (mangaItem) => {
-    // Check if it's a book (Gutenberg)
-    if (mangaItem.source === 'gutenberg' && mangaItem.gutenberg_id) {
-      navigate(`/book/${mangaItem.gutenberg_id}`)
+    if (!mangaItem) return
+    
+    // Check if it's a book (Gutenberg) - check multiple ways
+    const isGutenberg = mangaItem.source === 'gutenberg' || 
+                       mangaItem.Type === 'book' || 
+                       (mangaItem.imdbID && mangaItem.imdbID.toString().startsWith('gutenberg_'))
+    
+    if (isGutenberg) {
+      // Extract Gutenberg ID
+      let gutenbergId = mangaItem.gutenberg_id
+      if (!gutenbergId && mangaItem.imdbID && mangaItem.imdbID.toString().startsWith('gutenberg_')) {
+        gutenbergId = mangaItem.imdbID.toString().replace('gutenberg_', '')
+      }
+      
+      if (gutenbergId) {
+        navigate(`/book/${gutenbergId}`)
+        return
+      }
     }
+    
     // Check if it's anime/manga (AniList)
-    else if (mangaItem.anilist_id) {
+    if (mangaItem.anilist_id) {
       navigate(`/movie/anilist_${mangaItem.anilist_id}`)
+      return
     }
+    
     // Otherwise, try to navigate with imdbID
-    else if (mangaItem.imdbID) {
+    if (mangaItem.imdbID && !mangaItem.imdbID.toString().startsWith('gutenberg_')) {
       navigate(`/movie/${mangaItem.imdbID}`)
     }
   }

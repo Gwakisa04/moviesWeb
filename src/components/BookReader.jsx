@@ -20,16 +20,19 @@ const BookReader = () => {
       const bookData = await getBookById(gutenbergId)
       setBook(bookData)
       
-      // Get reading URL
+      // Get reading URL - try multiple sources and formats
       let url = bookData.reading_url
-      if (!url && bookData.gutenberg_id) {
-        // Construct Gutenberg reading URL
-        url = `https://www.gutenberg.org/files/${bookData.gutenberg_id}/${bookData.gutenberg_id}-h/${bookData.gutenberg_id}-h.htm`
-      }
       
       // Fallback to HTML download link if available
       if (!url && bookData.download_links?.html) {
         url = bookData.download_links.html
+      }
+      
+      // If still no URL, construct Gutenberg reading URL - try standard format
+      if (!url && bookData.gutenberg_id) {
+        const bookId = bookData.gutenberg_id
+        // Standard format: https://www.gutenberg.org/files/{id}/{id}-h/{id}-h.htm
+        url = `https://www.gutenberg.org/files/${bookId}/${bookId}-h/${bookId}-h.htm`
       }
       
       setReadingUrl(url)
@@ -121,6 +124,15 @@ const BookReader = () => {
             title={book.Title}
             allow="fullscreen"
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            onError={(e) => {
+              console.error('Iframe load error, trying alternative URL')
+              // Try alternative URL format if iframe fails
+              if (book.gutenberg_id) {
+                const bookId = book.gutenberg_id
+                const altUrl = `https://www.gutenberg.org/files/${bookId}/${bookId}/${bookId}-h.htm`
+                e.target.src = altUrl
+              }
+            }}
           />
         ) : (
           <div className="book-reader-error">
@@ -133,6 +145,16 @@ const BookReader = () => {
                 className="external-link-btn"
               >
                 Read on Gutenberg.org →
+              </a>
+            )}
+            {book.gutenberg_id && (
+              <a 
+                href={`https://www.gutenberg.org/ebooks/${book.gutenberg_id}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="external-link-btn"
+              >
+                View on Project Gutenberg →
               </a>
             )}
           </div>
