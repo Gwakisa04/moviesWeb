@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getMovieById, getMovieStreaming, getMovieYouTube, getAnimeById } from '../services/api'
+import { getMovieById, getMovieStreaming, getMovieYouTube, getAnimeById, getMovieWatchOptions } from '../services/api'
 import './MovieDetail.css'
 
 const MovieDetail = () => {
@@ -9,6 +9,7 @@ const MovieDetail = () => {
   const [movie, setMovie] = useState(null)
   const [streaming, setStreaming] = useState(null)
   const [youtube, setYoutube] = useState(null)
+  const [watchOptions, setWatchOptions] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [showTrailer, setShowTrailer] = useState(false)
@@ -47,15 +48,22 @@ const MovieDetail = () => {
         }
       }
       
-      // Regular movie/TV show
-      const [movieData, streamingData, youtubeData] = await Promise.all([
+      // Regular movie/TV show - use new watch options API
+      const [movieData, watchOptionsData, youtubeData] = await Promise.all([
         getMovieById(imdbId),
-        getMovieStreaming(imdbId).catch(() => null),
+        getMovieWatchOptions(imdbId).catch(() => null),
         getMovieYouTube(imdbId).catch(() => null)
       ])
       
       setMovie(movieData)
-      setStreaming(streamingData)
+      setWatchOptions(watchOptionsData)
+      // Keep streaming for backward compatibility
+      if (watchOptionsData) {
+        setStreaming({
+          streaming_sources: watchOptionsData.streaming_sources || [],
+          trailer: watchOptionsData.trailer
+        })
+      }
       setYoutube(youtubeData)
     } catch (error) {
       console.error('Error loading movie data:', error)
@@ -67,16 +75,40 @@ const MovieDetail = () => {
   const handleStreamingClick = (source) => {
     if (source.web_url) {
       window.open(source.web_url, '_blank')
+    } else if (source.android_url || source.playstore_url) {
+      window.open(source.android_url || source.playstore_url, '_blank')
     } else if (source.ios_url) {
       window.open(source.ios_url, '_blank')
-    } else if (source.android_url) {
-      window.open(source.android_url, '_blank')
+    }
+  }
+
+  const handleWatchNow = () => {
+    if (watchOptions?.can_watch_directly && watchOptions?.direct_watch_url) {
+      window.open(watchOptions.direct_watch_url, '_blank')
+    } else if (watchOptions?.streaming_sources?.length > 0) {
+      // Open first available streaming source
+      const firstSource = watchOptions.streaming_sources[0]
+      handleStreamingClick(firstSource)
     }
   }
 
   const handlePlayVideo = (video) => {
     setSelectedVideo(video)
     setShowTrailer(true)
+  }
+
+  const getPlatformIcon = (platformName) => {
+    if (!platformName) return '🎬'
+    const name = platformName.toLowerCase()
+    if (name.includes('netflix')) return '🎬'
+    if (name.includes('youtube')) return '▶️'
+    if (name.includes('play') || name.includes('google')) return '📱'
+    if (name.includes('hulu')) return '📺'
+    if (name.includes('disney')) return '🏰'
+    if (name.includes('amazon') || name.includes('prime')) return '📦'
+    if (name.includes('apple')) return '🍎'
+    if (name.includes('hbo') || name.includes('max')) return '🎭'
+    return '📺'
   }
 
   if (loading) {
@@ -106,52 +138,102 @@ const MovieDetail = () => {
   const trailerUrl = movie.trailer || (youtube?.youtube_trailers?.[0]?.url) || null
   const trailerEmbed = movie.trailer || (youtube?.youtube_trailers?.[0]?.embed_url) || null
 
+  // Format runtime for display
+  const formatRuntime = (runtimeStr) => {
+    if (!runtimeStr || runtimeStr === 'N/A') return null
+    const match = runtimeStr.match(/(\d+)/)
+    if (!match) return runtimeStr
+    const minutes = parseInt(match[1])
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours} hr ${mins > 0 ? `${mins} mins` : ''}`.trim()
+    }
+    return `${mins} mins`
+  }
+
+  const formattedRuntime = formatRuntime(runtime)
+
   return (
     <div className="movie-detail">
-      {/* Hero Section */}
-      <div className="movie-hero" style={{ backgroundImage: poster ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${poster})` : 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.9))' }}>
-        <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
+      {/* Hero Section - Large Banner */}
+      <div className="movie-hero" style={{ backgroundImage: poster ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.85)), url(${poster})` : 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95))' }}>
+        <button className="back-button" onClick={() => navigate(-1)}>←</button>
         
-        <div className="hero-content">
-          <div className="hero-poster">
-            {poster ? (
-              <img src={poster} alt={movie.Title} />
-            ) : (
-              <div className="poster-placeholder">🎬</div>
+        <div className="hero-content-new">
+          <h1 className="movie-title-hero">{movie.Title}</h1>
+          
+          <div className="movie-meta-hero">
+            {movie.Rated && movie.Rated !== 'N/A' && (
+              <span className="meta-badge">{movie.Rated}</span>
+            )}
+            {formattedRuntime && (
+              <span className="meta-badge">{formattedRuntime}</span>
+            )}
+            {movie.Year && (
+              <span className="meta-badge">{movie.Year}</span>
             )}
           </div>
           
-          <div className="hero-info">
-            <div className="movie-meta">
-              {movie.Rated && movie.Rated !== 'N/A' && (
-                <span className="age-rating">{movie.Rated}</span>
-              )}
-              {runtime && <span className="runtime">{runtime}</span>}
-              {movie.Year && <span className="year">{movie.Year}</span>}
-            </div>
-            
-            <h1 className="movie-title">{movie.Title}</h1>
-            
-            {rating && (
-              <div className="rating-section">
-                <span className="rating-value">{rating}</span>
-                <span className="rating-label">IMDb</span>
-              </div>
+          {/* Primary Action Buttons */}
+          <div className="primary-actions">
+            {watchOptions?.can_watch_directly ? (
+              <button className="btn-play-primary" onClick={handleWatchNow}>
+                <span className="play-icon">▶</span>
+                Watch Now
+              </button>
+            ) : (
+              <button 
+                className="btn-play-primary"
+                onClick={() => trailerUrl ? handlePlayVideo({ url: trailerUrl, embed_url: trailerEmbed }) : handleWatchNow()}
+              >
+                <span className="play-icon">▶</span>
+                {trailerUrl ? 'Play Trailer' : 'Watch'}
+              </button>
             )}
-            
-            <div className="action-buttons">
-              {trailerUrl && (
-                <button 
-                  className="btn-primary"
-                  onClick={() => handlePlayVideo({ url: trailerUrl, embed_url: trailerEmbed })}
-                >
-                  ▶ Trailer
-                </button>
-              )}
-              <button className="btn-secondary">+ Watchlist</button>
-              <button className="btn-icon" title="Rate">⭐</button>
-              <button className="btn-icon" title="Share">📤</button>
+            <button className="btn-download">
+              <span className="download-icon">⬇</span>
+              Download
+            </button>
+          </div>
+          
+          {/* Plot Summary */}
+          {movie.Plot && movie.Plot !== 'N/A' && (
+            <div className="plot-summary">
+              <p>{movie.Plot}</p>
             </div>
+          )}
+          
+          {/* Interaction Buttons Grid */}
+          <div className="interaction-buttons">
+            <button className="interaction-btn" title="Rate the movie">
+              <span className="btn-icon-text">⭐</span>
+              <span className="btn-label">Rate</span>
+            </button>
+            <button className="interaction-btn" title="Add to watchlist">
+              <span className="btn-icon-text">+</span>
+              <span className="btn-label">Watchlist</span>
+            </button>
+            <button className="interaction-btn" title="Add to collection">
+              <span className="btn-icon-text">🔖</span>
+              <span className="btn-label">Collection</span>
+            </button>
+            <button className="interaction-btn" title="Not interesting">
+              <span className="btn-icon-text">👁️</span>
+              <span className="btn-label">Not interesting</span>
+            </button>
+            <button className="interaction-btn" title="Mark as viewed">
+              <span className="btn-icon-text">👁️</span>
+              <span className="btn-label">Viewed</span>
+            </button>
+            <button className="interaction-btn" title="Share">
+              <span className="btn-icon-text">📤</span>
+              <span className="btn-label">Share</span>
+            </button>
+            <button className="interaction-btn" title="Report">
+              <span className="btn-icon-text">🚩</span>
+              <span className="btn-label">Report</span>
+            </button>
           </div>
         </div>
       </div>
@@ -348,22 +430,45 @@ const MovieDetail = () => {
 
         {activeTab === 'streaming' && (
           <div className="streaming-section">
-            {streaming?.streaming_sources && streaming.streaming_sources.length > 0 ? (
-              <div className="streaming-sources">
-                {streaming.streaming_sources.map((source, i) => (
-                  <div key={i} className="streaming-card" onClick={() => handleStreamingClick(source)}>
-                    <div className="streaming-info">
-                      <h3>{source.name}</h3>
-                      <div className="streaming-meta">
-                        <span className={`streaming-type ${source.type}`}>{source.type}</span>
-                        {source.format && <span className="streaming-format">{source.format.toUpperCase()}</span>}
-                        {source.price && <span className="streaming-price">${source.price}</span>}
-                      </div>
-                    </div>
-                    <button className="streaming-button">Watch Now →</button>
-                  </div>
-                ))}
+            {watchOptions?.can_watch_directly && watchOptions?.primary_platform && (
+              <div className="watch-now-banner">
+                <div className="watch-now-content">
+                  <h3>Available to Watch</h3>
+                  <p>Watch directly on {watchOptions.primary_platform}</p>
+                  <button className="btn-watch-now-banner" onClick={handleWatchNow}>
+                    Watch Now on {watchOptions.primary_platform} →
+                  </button>
+                </div>
               </div>
+            )}
+            
+            {watchOptions?.streaming_sources && watchOptions.streaming_sources.length > 0 ? (
+              <>
+                <h3 className="section-title">Where to Watch</h3>
+                <div className="platforms-grid">
+                  {watchOptions.streaming_sources.map((source, i) => (
+                    <div key={i} className="platform-card" onClick={() => handleStreamingClick(source)}>
+                      <div className="platform-icon">
+                        {getPlatformIcon(source.platform)}
+                      </div>
+                      <div className="platform-info">
+                        <h4>{source.platform || 'Unknown'}</h4>
+                        <div className="platform-meta">
+                          <span className={`platform-type ${source.type}`}>
+                            {source.type === 'free' ? 'Free' : 
+                             source.type === 'subscription' ? 'Subscription' :
+                             source.type === 'rental' ? 'Rent' : 'Buy'}
+                          </span>
+                          {source.price_display && (
+                            <span className="platform-price">{source.price_display}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="platform-arrow">→</div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <p className="no-content">No streaming sources available</p>
             )}

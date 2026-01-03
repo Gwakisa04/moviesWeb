@@ -90,6 +90,19 @@ export const getMovieYouTube = async (imdbId, includeMusic = true) => {
   }
 }
 
+// Get comprehensive watch options (JustWatch + WatchMode)
+export const getMovieWatchOptions = async (imdbId, country = 'US') => {
+  try {
+    const response = await api.get(`/movies/${imdbId}/watch`, { 
+      params: { country } 
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching watch options:', error)
+    throw error
+  }
+}
+
 // AniList API endpoints
 export const searchManga = async (query, page = 1, limit = 20) => {
   try {
