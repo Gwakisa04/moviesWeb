@@ -19,14 +19,25 @@ const Manga = () => {
       setLoading(true)
       const data = await fetchPopularManga(200) // Increased to 200+
       console.log('Manga data received:', data)
-      if (data && data.Search && Array.isArray(data.Search)) {
+      console.log('Manga Search array:', data?.Search)
+      console.log('Manga Search length:', data?.Search?.length)
+      
+      if (data && data.Search && Array.isArray(data.Search) && data.Search.length > 0) {
+        console.log(`Setting ${data.Search.length} manga items`)
         setManga(data.Search)
       } else {
-        console.warn('Invalid manga data structure:', data)
+        console.warn('Invalid or empty manga data:', {
+          hasData: !!data,
+          hasSearch: !!(data && data.Search),
+          isArray: !!(data && data.Search && Array.isArray(data.Search)),
+          length: data?.Search?.length || 0,
+          fullData: data
+        })
         setManga([])
       }
     } catch (error) {
       console.error('Error loading manga:', error)
+      console.error('Error details:', error.response?.data || error.message)
       setManga([])
     } finally {
       setLoading(false)
