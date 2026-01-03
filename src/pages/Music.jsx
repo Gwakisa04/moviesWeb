@@ -2,6 +2,46 @@ import React, { useState, useEffect } from 'react'
 import { searchMusicVideos, getTrendingMusicVideos } from '../services/api'
 import './Music.css'
 
+// Utility function to extract YouTube video ID and convert to embed URL
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return null
+  
+  // If it's already an embed URL, return as is
+  if (url.includes('youtube.com/embed/')) {
+    return url
+  }
+  
+  // Extract video ID from various YouTube URL formats
+  let videoId = null
+  
+  // Format: https://www.youtube.com/watch?v=VIDEO_ID
+  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+  if (watchMatch) {
+    videoId = watchMatch[1]
+  }
+  
+  // Format: https://www.youtube.com/embed/VIDEO_ID
+  const embedMatch = url.match(/youtube\.com\/embed\/([^&\s]+)/)
+  if (embedMatch) {
+    videoId = embedMatch[1]
+  }
+  
+  // Format: https://youtu.be/VIDEO_ID
+  const shortMatch = url.match(/youtu\.be\/([^&\s]+)/)
+  if (shortMatch) {
+    videoId = shortMatch[1]
+  }
+  
+  // If we found a video ID, return embed URL
+  if (videoId) {
+    // Remove any query parameters from video ID
+    videoId = videoId.split('&')[0].split('?')[0]
+    return `https://www.youtube.com/embed/${videoId}`
+  }
+  
+  return null
+}
+
 const Music = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [videos, setVideos] = useState([])
@@ -113,22 +153,32 @@ const Music = () => {
         <div className="video-modal" onClick={() => setShowPlayer(false)}>
           <div className="video-modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={() => setShowPlayer(false)}>×</button>
-            {selectedVideo.embed_url ? (
-              <iframe
-                src={selectedVideo.embed_url}
-                title={selectedVideo.title || 'Video'}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="video-iframe"
-              />
-            ) : (
-              <div className="video-fallback">
-                <a href={selectedVideo.url} target="_blank" rel="noopener noreferrer">
-                  Watch on YouTube
-                </a>
-              </div>
-            )}
+            {(() => {
+              // Get embed URL - try embed_url first, then convert url to embed
+              const embedUrl = selectedVideo.embed_url || getYouTubeEmbedUrl(selectedVideo.url)
+              
+              if (embedUrl) {
+                return (
+                  <iframe
+                    src={embedUrl}
+                    title={selectedVideo.title || 'Video'}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="video-iframe"
+                  />
+                )
+              } else {
+                return (
+                  <div className="video-fallback">
+                    <p>Unable to load video. Please watch on YouTube.</p>
+                    <a href={selectedVideo.url} target="_blank" rel="noopener noreferrer">
+                      Watch on YouTube →
+                    </a>
+                  </div>
+                )
+              }
+            })()}
           </div>
         </div>
       )}
