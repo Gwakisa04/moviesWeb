@@ -52,9 +52,17 @@ const Manga = () => {
   }
 
   const handleMangaClick = (mangaItem) => {
-    // Navigate to detail page if available
-    if (mangaItem.anilist_id) {
+    // Check if it's a book (Gutenberg)
+    if (mangaItem.source === 'gutenberg' && mangaItem.gutenberg_id) {
+      navigate(`/book/${mangaItem.gutenberg_id}`)
+    }
+    // Check if it's anime/manga (AniList)
+    else if (mangaItem.anilist_id) {
       navigate(`/movie/anilist_${mangaItem.anilist_id}`)
+    }
+    // Otherwise, try to navigate with imdbID
+    else if (mangaItem.imdbID) {
+      navigate(`/movie/${mangaItem.imdbID}`)
     }
   }
 
@@ -65,7 +73,7 @@ const Manga = () => {
         <form className="manga-search-form" onSubmit={handleSearch}>
           <input
             type="text"
-            placeholder="Search manga..."
+            placeholder="Search manga, books, comics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="manga-search-input"

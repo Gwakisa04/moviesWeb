@@ -191,3 +191,14 @@ export const getTrendingMusicVideos = async (maxResults = 50) => {
   }
 }
 
+// Get book by Gutenberg ID
+export const getBookById = async (gutenbergId) => {
+  try {
+    const response = await api.get(`/books/${gutenbergId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching book:', error)
+    throw error
+  }
+}
+

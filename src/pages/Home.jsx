@@ -54,20 +54,38 @@ const Home = () => {
   }
 
   const handleMovieClick = (movie) => {
-    // Extract ID from different sources
-    let id = movie.imdbID
-    if (!id || id.startsWith('tmdb_') || id.startsWith('tvmaze_')) {
-      // Try to get from other fields
-      id = movie.imdbID || movie.watchmode_imdb_id || movie.anilist_id
+    if (!movie) return
+    
+    // Handle Gutenberg books
+    if (movie.source === 'gutenberg' && movie.gutenberg_id) {
+      navigate(`/book/${movie.gutenberg_id}`)
+      return
     }
     
     // Handle AniList IDs
+    if (movie.anilist_id) {
+      navigate(`/movie/anilist_${movie.anilist_id}`)
+      return
+    }
+    
+    // Extract ID from different sources
+    let id = movie.imdbID
+    
+    // Handle different ID formats
     if (id && id.toString().startsWith('anilist_')) {
       navigate(`/movie/${id}`)
-    } else if (id && !id.toString().startsWith('tmdb_') && !id.toString().startsWith('tvmaze_')) {
+    } else if (id && !id.toString().startsWith('tmdb_') && !id.toString().startsWith('tvmaze_') && !id.toString().startsWith('kitsu_')) {
+      // Regular IMDb ID or other valid ID
       navigate(`/movie/${id}`)
-    } else if (movie.anilist_id) {
-      navigate(`/movie/anilist_${movie.anilist_id}`)
+    } else if (movie.tmdb_id) {
+      navigate(`/movie/tmdb_${movie.tmdb_id}`)
+    } else if (movie.tvmaze_id) {
+      navigate(`/movie/tvmaze_${movie.tvmaze_id}`)
+    } else if (movie.kitsu_id) {
+      navigate(`/movie/kitsu_${movie.kitsu_id}`)
+    } else if (id) {
+      // Fallback: try with whatever ID we have
+      navigate(`/movie/${id}`)
     }
   }
 

@@ -27,33 +27,49 @@ const MovieDetail = () => {
       if (imdbId && imdbId.toString().startsWith('anilist_')) {
         const anilistId = parseInt(imdbId.toString().replace('anilist_', ''))
         if (!isNaN(anilistId)) {
-          const animeData = await getAnimeById(anilistId)
-          setMovie(animeData)
-          setStreaming(null)
-          // For AniList, use the trailer from the data
-          if (animeData?.trailer) {
-            const trailerId = animeData.trailer_youtube_id || animeData.trailer.split('watch?v=')[1]?.split('&')[0]
-            setYoutube({
-              youtube_trailers: [{
-                url: animeData.trailer,
-                embed_url: trailerId ? `https://www.youtube.com/embed/${trailerId}` : animeData.trailer.replace('watch?v=', 'embed/'),
-                title: `${animeData.Title} - Trailer`
-              }],
-              youtube_music_videos: []
-            })
-          } else {
-            setYoutube({ youtube_trailers: [], youtube_music_videos: [] })
+          try {
+            const animeData = await getAnimeById(anilistId)
+            setMovie(animeData)
+            setStreaming(null)
+            // For AniList, use the trailer from the data
+            if (animeData?.trailer) {
+              const trailerId = animeData.trailer_youtube_id || animeData.trailer.split('watch?v=')[1]?.split('&')[0]
+              setYoutube({
+                youtube_trailers: [{
+                  url: animeData.trailer,
+                  embed_url: trailerId ? `https://www.youtube.com/embed/${trailerId}` : animeData.trailer.replace('watch?v=', 'embed/'),
+                  title: `${animeData.Title} - Trailer`
+                }],
+                youtube_music_videos: []
+              })
+            } else {
+              setYoutube({ youtube_trailers: [], youtube_music_videos: [] })
+            }
+            return
+          } catch (error) {
+            console.error('Error loading anime:', error)
+            // Continue to try regular movie endpoint
           }
-          return
         }
       }
       
       // Regular movie/TV show - use new watch options API
-      const [movieData, watchOptionsData, youtubeData] = await Promise.all([
-        getMovieById(imdbId),
+      // Use Promise.allSettled to handle partial failures gracefully
+      const results = await Promise.allSettled([
+        getMovieById(imdbId).catch(() => null),
         getMovieWatchOptions(imdbId).catch(() => null),
         getMovieYouTube(imdbId).catch(() => null)
       ])
+      
+      const movieData = results[0].status === 'fulfilled' ? results[0].value : null
+      const watchOptionsData = results[1].status === 'fulfilled' ? results[1].value : null
+      const youtubeData = results[2].status === 'fulfilled' ? results[2].value : { youtube_trailers: [], youtube_music_videos: [] }
+      
+      if (!movieData || movieData.Response === 'False') {
+        // Movie not found
+        setMovie(null)
+        return
+      }
       
       setMovie(movieData)
       setWatchOptions(watchOptionsData)
@@ -64,9 +80,10 @@ const MovieDetail = () => {
           trailer: watchOptionsData.trailer
         })
       }
-      setYoutube(youtubeData)
+      setYoutube(youtubeData || { youtube_trailers: [], youtube_music_videos: [] })
     } catch (error) {
       console.error('Error loading movie data:', error)
+      setMovie(null)
     } finally {
       setLoading(false)
     }
@@ -122,8 +139,14 @@ const MovieDetail = () => {
   if (!movie) {
     return (
       <div className="movie-detail-error">
-        <h2>Movie not found</h2>
-        <button onClick={() => navigate('/')}>Go Back</button>
+        <div className="error-content">
+          <h2>Movie not found</h2>
+          <p>The movie you're looking for couldn't be loaded. It may not be available in our database.</p>
+          <div className="error-actions">
+            <button className="btn-primary" onClick={() => navigate('/')}>Go Home</button>
+            <button className="btn-secondary" onClick={() => navigate(-1)}>Go Back</button>
+          </div>
+        </div>
       </div>
     )
   }
