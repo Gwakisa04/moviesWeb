@@ -184,16 +184,16 @@ const MovieDetail = () => {
   }
 
   const handleFullscreen = () => {
-    const iframe = document.querySelector('.video-iframe')
-    if (iframe) {
-      if (iframe.requestFullscreen) {
-        iframe.requestFullscreen()
-      } else if (iframe.webkitRequestFullscreen) {
-        iframe.webkitRequestFullscreen()
-      } else if (iframe.mozRequestFullScreen) {
-        iframe.mozRequestFullScreen()
-      } else if (iframe.msRequestFullscreen) {
-        iframe.msRequestFullscreen()
+    const modal = document.querySelector('.video-modal-content')
+    if (modal) {
+      if (modal.requestFullscreen) {
+        modal.requestFullscreen()
+      } else if (modal.webkitRequestFullscreen) {
+        modal.webkitRequestFullscreen()
+      } else if (modal.mozRequestFullScreen) {
+        modal.mozRequestFullScreen()
+      } else if (modal.msRequestFullscreen) {
+        modal.msRequestFullscreen()
       }
     }
   }
@@ -201,7 +201,20 @@ const MovieDetail = () => {
   const handleToggleLandscape = () => {
     const modal = document.querySelector('.video-modal')
     if (modal) {
-      modal.classList.toggle('landscape-mode')
+      const isLandscape = modal.classList.contains('landscape-mode')
+      if (isLandscape) {
+        modal.classList.remove('landscape-mode')
+        // Try to lock orientation back to portrait
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('portrait').catch(() => {})
+        }
+      } else {
+        modal.classList.add('landscape-mode')
+        // Try to lock orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {})
+        }
+      }
     }
   }
 
@@ -617,29 +630,36 @@ const MovieDetail = () => {
                       className="video-iframe"
                     />
                     <div className="video-controls-overlay">
-                      <div className="video-controls">
+                      <div className="video-controls-bar">
                         <button 
-                          className="control-btn" 
+                          className="control-icon-btn" 
+                          onClick={handleToggleLandscape}
+                          title="Toggle Landscape/Portrait"
+                        >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+                            <path d="M7 9h10M7 15h10"/>
+                          </svg>
+                        </button>
+                        <button 
+                          className="control-icon-btn" 
                           onClick={handleFullscreen}
                           title="Fullscreen"
                         >
-                          ⛶ Fullscreen
-                        </button>
-                        <button 
-                          className="control-btn" 
-                          onClick={handleToggleLandscape}
-                          title="Toggle Landscape"
-                        >
-                          🔄 Landscape
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                          </svg>
                         </button>
                         <a 
                           href={selectedVideo.url || selectedVideo.trailer} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="control-btn"
+                          className="control-icon-btn"
                           title="Open on YouTube"
                         >
-                          ▶️ YouTube
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                          </svg>
                         </a>
                       </div>
                     </div>

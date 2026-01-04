@@ -914,57 +914,93 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+  padding: 15px 20px;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.25s ease;
   pointer-events: none;
+  z-index: 5;
 }
 
-.video-modal-content:hover .video-controls-overlay {
+.video-modal-content:hover .video-controls-overlay,
+.video-controls-overlay:focus-within {
   opacity: 1;
   pointer-events: all;
 }
 
-.video-controls {
+.video-controls-bar {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  gap: 12px;
+  justify-content: flex-end;
   align-items: center;
-  flex-wrap: wrap;
 }
 
-.control-btn {
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.2);
+.control-icon-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s;
-  text-decoration: none;
-  display: inline-flex;
+  transition: all 0.2s ease;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+.control-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.control-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.control-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.video-modal.landscape-mode {
+  /* Landscape mode - full width, optimized height */
 }
 
 .video-modal.landscape-mode .video-modal-content {
-  max-width: 95vw;
-  aspect-ratio: 16/9;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border-radius: 0;
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .video-modal .video-modal-content {
+  .video-modal:not(.landscape-mode) .video-modal-content {
     max-width: 95vw;
     max-height: 95vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .video-controls-overlay {
+    padding: 12px 15px;
+  }
+
+  .control-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .control-icon-btn svg {
+    width: 18px;
+    height: 18px;
   }
 }
 
