@@ -130,12 +130,19 @@ const MovieDetail = () => {
   }
 
   const handleStreamingClick = (source) => {
+    // Prioritize web_url, then direct_watch_url, then platform-specific URLs
     if (source.web_url) {
       window.open(source.web_url, '_blank')
+    } else if (source.direct_watch_url) {
+      window.open(source.direct_watch_url, '_blank')
+    } else if (source.url) {
+      window.open(source.url, '_blank')
     } else if (source.android_url || source.playstore_url) {
       window.open(source.android_url || source.playstore_url, '_blank')
     } else if (source.ios_url) {
       window.open(source.ios_url, '_blank')
+    } else if (source.platform_url) {
+      window.open(source.platform_url, '_blank')
     }
   }
 
@@ -158,13 +165,22 @@ const MovieDetail = () => {
     if (!platformName) return '🎬'
     const name = platformName.toLowerCase()
     if (name.includes('netflix')) return '🎬'
-    if (name.includes('youtube')) return '▶️'
-    if (name.includes('play') || name.includes('google')) return '📱'
+    if (name.includes('youtube') || name.includes('youtu')) return '▶️'
+    if (name.includes('play') || name.includes('google') || name.includes('playstore')) return '📱'
     if (name.includes('hulu')) return '📺'
-    if (name.includes('disney')) return '🏰'
+    if (name.includes('disney') || name.includes('disney+')) return '🏰'
     if (name.includes('amazon') || name.includes('prime')) return '📦'
-    if (name.includes('apple')) return '🍎'
-    if (name.includes('hbo') || name.includes('max')) return '🎭'
+    if (name.includes('apple') || name.includes('itunes')) return '🍎'
+    if (name.includes('hbo') || name.includes('max') || name.includes('hbo max')) return '🎭'
+    if (name.includes('paramount')) return '🎪'
+    if (name.includes('peacock')) return '🦚'
+    if (name.includes('crunchyroll')) return '🍙'
+    if (name.includes('funimation')) return '🎌'
+    if (name.includes('vudu')) return '📀'
+    if (name.includes('fandango')) return '🎟️'
+    if (name.includes('redbox')) return '📦'
+    if (name.includes('tubi')) return '📺'
+    if (name.includes('pluto')) return '🪐'
     return '📺'
   }
 
@@ -282,18 +298,6 @@ const MovieDetail = () => {
           onClick={() => setActiveTab('overview')}
         >
           Overview
-        </button>
-        <button 
-          className={`tab ${activeTab === 'trailers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('trailers')}
-        >
-          Trailers
-        </button>
-        <button 
-          className={`tab ${activeTab === 'music' ? 'active' : ''}`}
-          onClick={() => setActiveTab('music')}
-        >
-          Music
         </button>
         <button 
           className={`tab ${activeTab === 'streaming' ? 'active' : ''}`}
@@ -425,61 +429,15 @@ const MovieDetail = () => {
           </div>
         )}
 
-        {activeTab === 'trailers' && (
-          <div className="trailers-section">
-            {youtube?.youtube_trailers && youtube.youtube_trailers.length > 0 ? (
-              <div className="videos-grid">
-                {youtube.youtube_trailers.map((video, i) => (
-                  <div key={i} className="video-card" onClick={() => handlePlayVideo(video)}>
-                    <div className="video-thumbnail">
-                      {video.thumbnail && (
-                        <img src={video.thumbnail} alt={video.title} />
-                      )}
-                      <div className="play-overlay">▶</div>
-                    </div>
-                    <h4>{video.title}</h4>
-                    <p>{video.channel_title}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-content">No trailers available</p>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'music' && (
-          <div className="music-section">
-            {youtube?.youtube_music_videos && youtube.youtube_music_videos.length > 0 ? (
-              <div className="videos-grid">
-                {youtube.youtube_music_videos.map((video, i) => (
-                  <div key={i} className="video-card" onClick={() => handlePlayVideo(video)}>
-                    <div className="video-thumbnail">
-                      {video.thumbnail && (
-                        <img src={video.thumbnail} alt={video.title} />
-                      )}
-                      <div className="play-overlay">▶</div>
-                    </div>
-                    <h4>{video.title}</h4>
-                    <p>{video.channel_title}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-content">No music videos available</p>
-            )}
-          </div>
-        )}
-
         {activeTab === 'streaming' && (
           <div className="streaming-section">
-            {watchOptions?.can_watch_directly && watchOptions?.primary_platform && (
+            {watchOptions?.can_watch_directly && watchOptions?.direct_watch_url && (
               <div className="watch-now-banner">
                 <div className="watch-now-content">
                   <h3>Available to Watch</h3>
-                  <p>Watch directly on {watchOptions.primary_platform}</p>
+                  <p>Watch directly on {watchOptions.primary_platform || 'available platform'}</p>
                   <button className="btn-watch-now-banner" onClick={handleWatchNow}>
-                    Watch Now on {watchOptions.primary_platform} →
+                    Watch Now →
                   </button>
                 </div>
               </div>
@@ -487,33 +445,86 @@ const MovieDetail = () => {
             
             {watchOptions?.streaming_sources && watchOptions.streaming_sources.length > 0 ? (
               <>
-                <h3 className="section-title">Where to Watch</h3>
+                <h3 className="section-title">Available Platforms</h3>
                 <div className="platforms-grid">
-                  {watchOptions.streaming_sources.map((source, i) => (
-                    <div key={i} className="platform-card" onClick={() => handleStreamingClick(source)}>
-                      <div className="platform-icon">
-                        {getPlatformIcon(source.platform)}
-                      </div>
-                      <div className="platform-info">
-                        <h4>{source.platform || 'Unknown'}</h4>
-                        <div className="platform-meta">
-                          <span className={`platform-type ${source.type}`}>
-                            {source.type === 'free' ? 'Free' : 
-                             source.type === 'subscription' ? 'Subscription' :
-                             source.type === 'rental' ? 'Rent' : 'Buy'}
-                          </span>
-                          {source.price_display && (
-                            <span className="platform-price">{source.price_display}</span>
-                          )}
+                  {watchOptions.streaming_sources.map((source, i) => {
+                    // Determine the best URL to use
+                    const watchUrl = source.web_url || source.direct_watch_url || source.url || 
+                                   source.android_url || source.playstore_url || source.ios_url || 
+                                   source.platform_url
+                    
+                    return (
+                      <div 
+                        key={i} 
+                        className="platform-card" 
+                        onClick={() => watchUrl && handleStreamingClick(source)}
+                        style={{ cursor: watchUrl ? 'pointer' : 'default' }}
+                      >
+                        <div className="platform-icon">
+                          {getPlatformIcon(source.platform || source.name)}
                         </div>
+                        <div className="platform-info">
+                          <h4>{source.platform || source.name || 'Unknown Platform'}</h4>
+                          <div className="platform-meta">
+                            <span className={`platform-type ${source.type || source.presentation_type || ''}`}>
+                              {source.type === 'free' || source.presentation_type === 'free' ? 'Free' : 
+                               source.type === 'subscription' || source.presentation_type === 'subscription' ? 'Subscription' :
+                               source.type === 'rental' || source.presentation_type === 'rental' ? 'Rent' : 
+                               source.type === 'buy' || source.presentation_type === 'buy' ? 'Buy' : 
+                               source.type || source.presentation_type || 'Watch'}
+                            </span>
+                            {source.price_display && (
+                              <span className="platform-price">{source.price_display}</span>
+                            )}
+                            {source.price && !source.price_display && (
+                              <span className="platform-price">${source.price}</span>
+                            )}
+                          </div>
+                        </div>
+                        {watchUrl && <div className="platform-arrow">→</div>}
                       </div>
-                      <div className="platform-arrow">→</div>
-                    </div>
-                  ))}
+                    )
+                  })}
+                </div>
+              </>
+            ) : streaming?.streaming_sources && streaming.streaming_sources.length > 0 ? (
+              <>
+                <h3 className="section-title">Available Platforms</h3>
+                <div className="platforms-grid">
+                  {streaming.streaming_sources.map((source, i) => {
+                    const watchUrl = source.web_url || source.url || source.android_url || source.playstore_url
+                    return (
+                      <div 
+                        key={i} 
+                        className="platform-card" 
+                        onClick={() => watchUrl && handleStreamingClick(source)}
+                        style={{ cursor: watchUrl ? 'pointer' : 'default' }}
+                      >
+                        <div className="platform-icon">
+                          {getPlatformIcon(source.platform || source.name)}
+                        </div>
+                        <div className="platform-info">
+                          <h4>{source.platform || source.name || 'Unknown Platform'}</h4>
+                          <div className="platform-meta">
+                            <span className={`platform-type ${source.type || ''}`}>
+                              {source.type === 'free' ? 'Free' : 
+                               source.type === 'subscription' ? 'Subscription' :
+                               source.type === 'rental' ? 'Rent' : 
+                               source.type === 'buy' ? 'Buy' : 'Watch'}
+                            </span>
+                            {source.price_display && (
+                              <span className="platform-price">{source.price_display}</span>
+                            )}
+                          </div>
+                        </div>
+                        {watchUrl && <div className="platform-arrow">→</div>}
+                      </div>
+                    )
+                  })}
                 </div>
               </>
             ) : (
-              <p className="no-content">No streaming sources available</p>
+              <p className="no-content">No streaming sources available. Check back later for updates.</p>
             )}
           </div>
         )}
