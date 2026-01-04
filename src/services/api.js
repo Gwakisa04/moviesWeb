@@ -2,6 +2,11 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://moviepy-74vk.onrender.com/api'
 
+// Log the API URL being used (helpful for debugging)
+console.log('🔗 API Base URL:', API_BASE_URL)
+console.log('🌍 Environment:', import.meta.env.MODE)
+console.log('🔑 VITE_API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL)
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -9,6 +14,47 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// Add request interceptor to log requests
+api.interceptors.request.use(
+  (config) => {
+    console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
+    return config
+  },
+  (error) => {
+    console.error('❌ Request Error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor to log errors
+api.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    if (error.response) {
+      // Server responded with error status
+      console.error(`❌ API Error ${error.response.status}:`, {
+        url: `${error.config?.baseURL}${error.config?.url}`,
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+      })
+    } else if (error.request) {
+      // Request made but no response received (CORS, network error, etc.)
+      console.error('❌ Network Error - No response received:', {
+        url: `${error.config?.baseURL}${error.config?.url}`,
+        message: error.message,
+        hint: 'This might be a CORS issue or the backend is not reachable. Check: 1) Backend URL is correct, 2) CORS is configured on backend, 3) Backend is running',
+      })
+    } else {
+      // Something else happened
+      console.error('❌ Request Setup Error:', error.message)
+    }
+    return Promise.reject(error)
+  }
+)
 
 export const searchMovies = async (query, page = 1, year = null, type = null) => {
   try {
