@@ -96,8 +96,14 @@ const MovieDetail = () => {
       // Regular movie/TV show - use new watch options API
       // Use Promise.allSettled to handle partial failures gracefully
       const results = await Promise.allSettled([
-        getMovieById(imdbId).catch(() => null),
-        getMovieWatchOptions(imdbId).catch(() => null),
+        getMovieById(imdbId).catch((err) => {
+          console.error('Error fetching movie:', err)
+          return null
+        }),
+        getMovieWatchOptions(imdbId).catch((err) => {
+          console.error('Error fetching watch options:', err)
+          return null
+        }),
         getMovieYouTube(imdbId).catch(() => null)
       ])
       
@@ -118,6 +124,14 @@ const MovieDetail = () => {
         setStreaming({
           streaming_sources: watchOptionsData.streaming_sources || [],
           trailer: watchOptionsData.trailer
+        })
+        
+        // Log watch options for debugging
+        console.log('📺 Watch Options:', {
+          streaming_sources_count: watchOptionsData.streaming_sources?.length || 0,
+          streaming_sources: watchOptionsData.streaming_sources,
+          can_watch_directly: watchOptionsData.can_watch_directly,
+          primary_platform: watchOptionsData.primary_platform
         })
       }
       setYoutube(youtubeData || { youtube_trailers: [], youtube_music_videos: [] })
@@ -143,6 +157,14 @@ const MovieDetail = () => {
       window.open(source.ios_url, '_blank')
     } else if (source.platform_url) {
       window.open(source.platform_url, '_blank')
+    } else if (source.youtube_embed_url || source.youtube_video_id) {
+      // Handle YouTube links
+      const youtubeUrl = source.youtube_embed_url || 
+                        `https://www.youtube.com/watch?v=${source.youtube_video_id}` ||
+                        source.youtube_url
+      if (youtubeUrl) {
+        window.open(youtubeUrl, '_blank')
+      }
     }
   }
 
@@ -164,8 +186,8 @@ const MovieDetail = () => {
   const getPlatformIcon = (platformName) => {
     if (!platformName) return '🎬'
     const name = platformName.toLowerCase()
-    if (name.includes('netflix')) return '🎬'
     if (name.includes('youtube') || name.includes('youtu')) return '▶️'
+    if (name.includes('netflix')) return '🎬'
     if (name.includes('play') || name.includes('google') || name.includes('playstore')) return '📱'
     if (name.includes('hulu')) return '📺'
     if (name.includes('disney') || name.includes('disney+')) return '🏰'
@@ -448,10 +470,12 @@ const MovieDetail = () => {
                 <h3 className="section-title">Available Platforms</h3>
                 <div className="platforms-grid">
                   {watchOptions.streaming_sources.map((source, i) => {
-                    // Determine the best URL to use
+                    // Determine the best URL to use (including YouTube)
                     const watchUrl = source.web_url || source.direct_watch_url || source.url || 
                                    source.android_url || source.playstore_url || source.ios_url || 
-                                   source.platform_url
+                                   source.platform_url || source.youtube_url || 
+                                   (source.youtube_video_id ? `https://www.youtube.com/watch?v=${source.youtube_video_id}` : null) ||
+                                   source.youtube_embed_url
                     
                     return (
                       <div 
@@ -492,7 +516,8 @@ const MovieDetail = () => {
                 <h3 className="section-title">Available Platforms</h3>
                 <div className="platforms-grid">
                   {streaming.streaming_sources.map((source, i) => {
-                    const watchUrl = source.web_url || source.url || source.android_url || source.playstore_url
+                    const watchUrl = source.web_url || source.url || source.android_url || source.playstore_url ||
+                                   source.youtube_url || (source.youtube_video_id ? `https://www.youtube.com/watch?v=${source.youtube_video_id}` : null)
                     return (
                       <div 
                         key={i} 
