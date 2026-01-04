@@ -18,55 +18,80 @@ const BookReader = () => {
     try {
       setLoading(true)
       console.log(`Loading book with ID: ${gutenbergId}`)
-      const bookData = await getBookById(gutenbergId)
-      console.log('Book data received:', bookData)
       
-      if (!bookData) {
-        console.error('Book data is null or undefined')
-        setBook(null)
-        return
+      // ALWAYS construct a reading URL from the gutenbergId parameter
+      // This ensures users can read the book even if the API call fails
+      const defaultUrl = `https://www.gutenberg.org/files/${gutenbergId}/${gutenbergId}-h/${gutenbergId}-h.htm`
+      setReadingUrl(defaultUrl)
+      console.log('Default reading URL set:', defaultUrl)
+      
+      // Try to fetch book metadata, but don't fail if it doesn't work
+      try {
+        const bookData = await getBookById(gutenbergId)
+        console.log('Book data received:', bookData)
+        
+        if (bookData) {
+          setBook(bookData)
+          
+          // Prefer reading_url from API if available
+          if (bookData.reading_url) {
+            setReadingUrl(bookData.reading_url)
+            console.log('Using API reading_url:', bookData.reading_url)
+          } else if (bookData.download_links?.html) {
+            // Fallback to HTML download link
+            setReadingUrl(bookData.download_links.html)
+            console.log('Using download_links.html:', bookData.download_links.html)
+          } else if (bookData.gutenberg_id) {
+            // Use gutenberg_id from API response
+            const apiUrl = `https://www.gutenberg.org/files/${bookData.gutenberg_id}/${bookData.gutenberg_id}-h/${bookData.gutenberg_id}-h.htm`
+            setReadingUrl(apiUrl)
+            console.log('Using API gutenberg_id:', apiUrl)
+          }
+        } else {
+          // If API returns null, create minimal book object with just the ID
+          setBook({
+            Title: `Book ${gutenbergId}`,
+            gutenberg_id: parseInt(gutenbergId),
+            source: 'gutenberg',
+            Type: 'book'
+          })
+        }
+      } catch (apiError) {
+        // API call failed, but we can still show the book with default URL
+        console.warn('API call failed, using default URL:', apiError)
+        setBook({
+          Title: `Book ${gutenbergId}`,
+          gutenberg_id: parseInt(gutenbergId),
+          source: 'gutenberg',
+          Type: 'book'
+        })
       }
-      
-      setBook(bookData)
-      
-      // Get reading URL - try multiple sources and formats
-      let url = bookData.reading_url
-      console.log('Initial reading_url:', url)
-      
-      // Fallback to HTML download link if available
-      if (!url && bookData.download_links?.html) {
-        url = bookData.download_links.html
-        console.log('Using download_links.html:', url)
-      }
-      
-      // If still no URL, construct Gutenberg reading URL - try standard format
-      if (!url && bookData.gutenberg_id) {
-        const bookId = bookData.gutenberg_id
-        // Standard format: https://www.gutenberg.org/files/{id}/{id}-h/{id}-h.htm
-        url = `https://www.gutenberg.org/files/${bookId}/${bookId}-h/${bookId}-h.htm`
-        console.log('Constructed reading URL:', url)
-      }
-      
-      // If we still don't have a URL, try using the gutenbergId from params
-      if (!url && gutenbergId) {
-        url = `https://www.gutenberg.org/files/${gutenbergId}/${gutenbergId}-h/${gutenbergId}-h.htm`
-        console.log('Using gutenbergId from params:', url)
-      }
-      
-      setReadingUrl(url)
-      console.log('Final reading URL:', url)
     } catch (error) {
-      console.error('Error loading book:', error)
-      console.error('Error details:', error.response?.data || error.message)
-      setBook(null)
+      console.error('Error in loadBook:', error)
+      // Even on error, set minimal book data so user can still read
+      setBook({
+        Title: `Book ${gutenbergId}`,
+        gutenberg_id: parseInt(gutenbergId),
+        source: 'gutenberg',
+        Type: 'book'
+      })
+      setReadingUrl(`https://www.gutenberg.org/files/${gutenbergId}/${gutenbergId}-h/${gutenbergId}-h.htm`)
     } finally {
       setLoading(false)
     }
   }
 
+  // Define displayBook for use in component - fallback to minimal object if API fails
+  const displayBook = book || {
+    Title: `Book ${gutenbergId}`,
+    gutenberg_id: parseInt(gutenbergId),
+    source: 'gutenberg',
+    Type: 'book'
+  }
+
   const handleDownload = (format) => {
-    if (book?.download_links?.[format]) {
-      window.open(book.download_links[format], '_blank')
+    if (displayBook?.download_links?.[format]) {
+      window.open(displayBook.download_links[format], '_blank')
     }
   }
 
@@ -79,7 +104,8 @@ const BookReader = () => {
     )
   }
 
-  if (!book) {
+  // Only show error if we don't have a reading URL AND don't have book data
+  if (!book && !readingUrl) {
     return (
       <div className="book-reader-error">
         <h2>Book not found</h2>
@@ -112,11 +138,11 @@ const BookReader = () => {
       <div className="book-reader-header">
         <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
         <div className="book-title-header">
-          <h1>{book.Title}</h1>
-          {book.author && <p className="book-author">By {book.author}</p>}
+          <h1>{displayBook.Title || `Book ${gutenbergId}`}</h1>
+          {displayBook.author && <p className="book-author">By {displayBook.author}</p>}
         </div>
         <div className="book-actions">
-          {book.download_links?.epub && (
+          {displayBook.download_links?.epub && (
             <button 
               className="download-btn"
               onClick={() => handleDownload('epub')}
@@ -125,7 +151,7 @@ const BookReader = () => {
               📥 EPUB
             </button>
           )}
-          {book.download_links?.txt && (
+          {displayBook.download_links?.txt && (
             <button 
               className="download-btn"
               onClick={() => handleDownload('txt')}
@@ -134,20 +160,31 @@ const BookReader = () => {
               📥 TXT
             </button>
           )}
+          {/* Always show link to Project Gutenberg */}
+          <a 
+            href={`https://www.gutenberg.org/ebooks/${gutenbergId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="download-btn"
+            style={{ textDecoration: 'none', marginLeft: '10px' }}
+            title="View on Project Gutenberg"
+          >
+            📚 Gutenberg
+          </a>
         </div>
       </div>
 
       {/* Book Info Bar */}
       <div className="book-info-bar">
-        {book.Year && book.Year !== 'N/A' && (
-          <span className="info-badge">Published: {book.Year}</span>
+        {displayBook.Year && displayBook.Year !== 'N/A' && (
+          <span className="info-badge">Published: {displayBook.Year}</span>
         )}
-        {book.download_count > 0 && (
-          <span className="info-badge">Downloads: {book.download_count.toLocaleString()}</span>
+        {displayBook.download_count > 0 && (
+          <span className="info-badge">Downloads: {displayBook.download_count.toLocaleString()}</span>
         )}
-        {book.genres && book.genres.length > 0 && (
+        {displayBook.genres && displayBook.genres.length > 0 && (
           <div className="genres-list">
-            {book.genres.slice(0, 3).map((genre, i) => (
+            {displayBook.genres.slice(0, 3).map((genre, i) => (
               <span key={i} className="genre-badge">{genre}</span>
             ))}
           </div>
@@ -161,35 +198,50 @@ const BookReader = () => {
             <iframe
               src={readingUrl}
               className="book-iframe"
-              title={book.Title}
+              title={displayBook.Title || `Book ${gutenbergId}`}
               allow="fullscreen"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
               onLoad={(e) => {
                 console.log('Iframe loaded successfully:', readingUrl)
               }}
               onError={(e) => {
                 console.error('Iframe load error, trying alternative URL')
                 // Try alternative URL format if iframe fails
-                if (book.gutenberg_id) {
-                  const bookId = book.gutenberg_id
-                  const altUrl = `https://www.gutenberg.org/files/${bookId}/${bookId}/${bookId}-h.htm`
-                  console.log('Trying alternative URL:', altUrl)
-                  e.target.src = altUrl
+                const bookId = displayBook.gutenberg_id || gutenbergId
+                const altUrl1 = `https://www.gutenberg.org/files/${bookId}/${bookId}/${bookId}-h.htm`
+                const altUrl2 = `https://www.gutenberg.org/cache/epub/${bookId}/pg${bookId}-images.html`
+                
+                console.log('Trying alternative URL 1:', altUrl1)
+                if (e.target.src !== altUrl1) {
+                  e.target.src = altUrl1
+                } else {
+                  console.log('Trying alternative URL 2:', altUrl2)
+                  e.target.src = altUrl2
                 }
               }}
             />
             <div style={{ padding: '10px', background: 'rgba(255,255,255,0.05)', marginTop: '10px', borderRadius: '5px' }}>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '5px 0' }}>
-                If the book doesn't load, try opening it directly:
+                If the book doesn't load in the reader above, you can:
               </p>
-              <a 
-                href={readingUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ color: '#007bff', textDecoration: 'underline' }}
-              >
-                {readingUrl}
-              </a>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '5px' }}>
+                <a 
+                  href={readingUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: '#007bff', textDecoration: 'underline', fontSize: '12px' }}
+                >
+                  Open in new tab →
+                </a>
+                <a 
+                  href={`https://www.gutenberg.org/ebooks/${gutenbergId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#007bff', textDecoration: 'underline', fontSize: '12px' }}
+                >
+                  View on Project Gutenberg →
+                </a>
+              </div>
             </div>
           </>
         ) : (
