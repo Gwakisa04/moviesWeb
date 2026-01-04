@@ -98,6 +98,42 @@ const Music = () => {
     setShowPlayer(true)
   }
 
+  const handleFullscreen = () => {
+    const iframe = document.querySelector('.video-iframe')
+    if (iframe) {
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen()
+      } else if (iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen()
+      } else if (iframe.mozRequestFullScreen) {
+        iframe.mozRequestFullScreen()
+      } else if (iframe.msRequestFullscreen) {
+        iframe.msRequestFullscreen()
+      }
+    }
+  }
+
+  const handleToggleLandscape = () => {
+    const modal = document.querySelector('.video-modal')
+    if (modal) {
+      modal.classList.toggle('landscape-mode')
+    }
+  }
+
+  const enhanceYouTubeUrl = (url) => {
+    if (!url) return url
+    // Add YouTube API parameters for better controls
+    if (url.includes('youtube.com/embed/')) {
+      // Check if parameters already exist
+      if (!url.includes('?')) {
+        return `${url}?enablejsapi=1&controls=1&rel=0&modestbranding=1`
+      } else if (!url.includes('enablejsapi')) {
+        return `${url}&enablejsapi=1&controls=1&rel=0&modestbranding=1`
+      }
+    }
+    return url
+  }
+
   return (
     <div className="music-page">
       <div className="music-header">
@@ -155,18 +191,50 @@ const Music = () => {
             <button className="close-button" onClick={() => setShowPlayer(false)}>×</button>
             {(() => {
               // Get embed URL - try embed_url first, then convert url to embed
-              const embedUrl = selectedVideo.embed_url || getYouTubeEmbedUrl(selectedVideo.url)
+              let embedUrl = selectedVideo.embed_url || getYouTubeEmbedUrl(selectedVideo.url)
+              
+              // Enhance YouTube URL with better controls
+              embedUrl = enhanceYouTubeUrl(embedUrl)
               
               if (embedUrl) {
                 return (
-                  <iframe
-                    src={embedUrl}
-                    title={selectedVideo.title || 'Video'}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="video-iframe"
-                  />
+                  <div className="video-player-container">
+                    <iframe
+                      src={embedUrl}
+                      title={selectedVideo.title || 'Video'}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                      className="video-iframe"
+                    />
+                    <div className="video-controls-overlay">
+                      <div className="video-controls">
+                        <button 
+                          className="control-btn" 
+                          onClick={handleFullscreen}
+                          title="Fullscreen"
+                        >
+                          ⛶ Fullscreen
+                        </button>
+                        <button 
+                          className="control-btn" 
+                          onClick={handleToggleLandscape}
+                          title="Toggle Landscape"
+                        >
+                          🔄 Landscape
+                        </button>
+                        <a 
+                          href={selectedVideo.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="control-btn"
+                          title="Open on YouTube"
+                        >
+                          ▶️ YouTube
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 )
               } else {
                 return (

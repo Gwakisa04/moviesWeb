@@ -44,6 +44,122 @@
   gap: 15px;
 }
 
+.quit-btn {
+  padding: 10px 16px;
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff6b6b;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  margin-left: 10px;
+}
+
+.quit-btn:hover {
+  background: rgba(255, 0, 0, 0.3);
+  border-color: rgba(255, 0, 0, 0.5);
+}
+
+.quit-btn.confirm {
+  background: rgba(255, 0, 0, 0.4);
+  border-color: #ff6b6b;
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.book-sections-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.sections-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  padding: 5px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.5) transparent;
+}
+
+.sections-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sections-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sections-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.5);
+  border-radius: 3px;
+}
+
+.sections-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.7);
+}
+
+.section-btn {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.section-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #fff;
+}
+
+.section-btn.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #FFD700;
+  font-weight: 600;
+}
+
+.extract-sections-btn {
+  padding: 8px 14px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.extract-sections-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
 .back-button {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -185,6 +301,25 @@
   
   .download-btn {
     flex: 1;
+  }
+
+  .quit-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+  
+  .book-sections-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sections-scroll {
+    width: 100%;
+  }
+
+  .extract-sections-btn {
+    width: 100%;
   }
   
   .book-reader-container {

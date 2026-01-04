@@ -9,6 +9,9 @@ const BookReader = () => {
   const [book, setBook] = useState(null)
   const [loading, setLoading] = useState(true)
   const [readingUrl, setReadingUrl] = useState(null)
+  const [sections, setSections] = useState([])
+  const [currentSection, setCurrentSection] = useState(null)
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false)
 
   useEffect(() => {
     loadBook()
@@ -95,6 +98,83 @@ const BookReader = () => {
     }
   }
 
+  const handleSectionClick = (sectionId) => {
+    const iframe = document.querySelector('.book-iframe')
+    if (iframe && iframe.contentWindow) {
+      try {
+        // Try to scroll to section in iframe
+        const element = iframe.contentDocument?.getElementById(sectionId) ||
+                       iframe.contentDocument?.querySelector(`a[name="${sectionId}"]`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } else {
+          // Try to find anchor link and click it
+          const link = iframe.contentDocument?.querySelector(`a[href="#${sectionId}"]`)
+          if (link) {
+            link.click()
+          }
+        }
+      } catch (e) {
+        // Cross-origin or other error - just update state
+        console.log('Could not navigate to section in iframe:', e)
+      }
+    }
+    setCurrentSection(sectionId)
+  }
+
+  const extractSectionsFromIframe = () => {
+    const iframe = document.querySelector('.book-iframe')
+    if (!iframe || !iframe.contentDocument) return
+
+    try {
+      const doc = iframe.contentDocument
+      // Try to find common section/chapter patterns
+      const headings = doc.querySelectorAll('h1, h2, h3, h4, .chapter, .section, [id*="chapter"], [id*="section"], [id*="Chapter"], [id*="Section"]')
+      const extractedSections = []
+      
+      headings.forEach((heading, index) => {
+        const id = heading.id || `section-${index}`
+        const text = heading.textContent.trim()
+        if (text && text.length < 100) { // Only include reasonable length headings
+          extractedSections.push({
+            id,
+            title: text,
+            element: heading
+          })
+        }
+      })
+
+      if (extractedSections.length > 0) {
+        setSections(extractedSections)
+      } else {
+        // Create generic sections if none found
+        setSections([
+          { id: 'top', title: 'Top of Book' },
+          { id: 'middle', title: 'Middle' },
+          { id: 'end', title: 'End of Book' }
+        ])
+      }
+    } catch (e) {
+      // Cross-origin error - create generic sections
+      console.log('Cannot access iframe content (CORS):', e)
+      setSections([
+        { id: 'top', title: 'Top' },
+        { id: 'middle', title: 'Middle' },
+        { id: 'end', title: 'End' }
+      ])
+    }
+  }
+
+  const handleQuit = () => {
+    if (showQuitConfirm) {
+      navigate('/manga')
+    } else {
+      setShowQuitConfirm(true)
+      // Auto-hide confirmation after 3 seconds
+      setTimeout(() => setShowQuitConfirm(false), 3000)
+    }
+  }
+
   if (loading) {
     return (
       <div className="book-reader-loading">
@@ -171,7 +251,45 @@ const BookReader = () => {
           >
             📚 Gutenberg
           </a>
+          <button 
+            className={`quit-btn ${showQuitConfirm ? 'confirm' : ''}`}
+            onClick={handleQuit}
+            title={showQuitConfirm ? 'Click again to quit' : 'Quit reading'}
+          >
+            {showQuitConfirm ? '✓ Confirm Quit' : '✕ Quit'}
+          </button>
         </div>
+      </div>
+
+      {/* Section Navigation */}
+      <div className="book-sections-nav">
+        {sections.length > 0 ? (
+          <div className="sections-scroll">
+            {sections.map((section, index) => (
+              <button
+                key={section.id || index}
+                className={`section-btn ${currentSection === section.id ? 'active' : ''}`}
+                onClick={() => handleSectionClick(section.id)}
+                title={section.title}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="sections-scroll">
+            <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '13px', padding: '8px 0' }}>
+              No sections detected. Click "Extract Sections" to find chapters.
+            </span>
+          </div>
+        )}
+        <button 
+          className="extract-sections-btn"
+          onClick={extractSectionsFromIframe}
+          title="Extract sections from book"
+        >
+          📑 Extract Sections
+        </button>
       </div>
 
       {/* Book Info Bar */}
@@ -195,18 +313,22 @@ const BookReader = () => {
       <div className="book-reader-container">
         {readingUrl ? (
           <>
-            <iframe
-              src={readingUrl}
-              className="book-iframe"
+          <iframe
+            src={readingUrl}
+            className="book-iframe"
               title={displayBook.Title || `Book ${gutenbergId}`}
-              allow="fullscreen"
+            allow="fullscreen"
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
               onLoad={(e) => {
                 console.log('Iframe loaded successfully:', readingUrl)
+                // Try to extract sections after iframe loads
+                setTimeout(() => {
+                  extractSectionsFromIframe()
+                }, 1000)
               }}
-              onError={(e) => {
-                console.error('Iframe load error, trying alternative URL')
-                // Try alternative URL format if iframe fails
+            onError={(e) => {
+              console.error('Iframe load error, trying alternative URL')
+              // Try alternative URL format if iframe fails
                 const bookId = displayBook.gutenberg_id || gutenbergId
                 const altUrl1 = `https://www.gutenberg.org/files/${bookId}/${bookId}/${bookId}-h.htm`
                 const altUrl2 = `https://www.gutenberg.org/cache/epub/${bookId}/pg${bookId}-images.html`
@@ -217,9 +339,9 @@ const BookReader = () => {
                 } else {
                   console.log('Trying alternative URL 2:', altUrl2)
                   e.target.src = altUrl2
-                }
-              }}
-            />
+              }
+            }}
+          />
             <div style={{ padding: '10px', background: 'rgba(255,255,255,0.05)', marginTop: '10px', borderRadius: '5px' }}>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '5px 0' }}>
                 If the book doesn't load in the reader above, you can:
@@ -269,7 +391,7 @@ const BookReader = () => {
             {book.gutenberg_id && (
               <a 
                 href={`https://www.gutenberg.org/ebooks/${book.gutenberg_id}`}
-                target="_blank"
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="external-link-btn"
                 style={{ 
