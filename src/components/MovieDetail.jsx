@@ -251,13 +251,18 @@ const MovieDetail = () => {
                 onClick={() => trailerUrl ? handlePlayVideo({ url: trailerUrl, embed_url: trailerEmbed }) : handleWatchNow()}
               >
                 <span className="play-icon">▶</span>
-                {trailerUrl ? 'Play Trailer' : 'Watch'}
+                {trailerUrl ? 'Trailer' : 'Watch'}
               </button>
             )}
-            <button className="btn-download">
-              <span className="download-icon">⬇</span>
-              Download
-            </button>
+            {trailerUrl && (
+              <button 
+                className="btn-download"
+                onClick={() => handlePlayVideo({ url: trailerUrl, embed_url: trailerEmbed })}
+              >
+                <span className="download-icon">🎬</span>
+                Trailer
+              </button>
+            )}
           </div>
           
           {/* Plot Summary */}
@@ -267,37 +272,6 @@ const MovieDetail = () => {
             </div>
           )}
           
-          {/* Interaction Buttons Grid */}
-          <div className="interaction-buttons">
-            <button className="interaction-btn" title="Rate the movie">
-              <span className="btn-icon-text">⭐</span>
-              <span className="btn-label">Rate</span>
-            </button>
-            <button className="interaction-btn" title="Add to watchlist">
-              <span className="btn-icon-text">+</span>
-              <span className="btn-label">Watchlist</span>
-            </button>
-            <button className="interaction-btn" title="Add to collection">
-              <span className="btn-icon-text">🔖</span>
-              <span className="btn-label">Collection</span>
-            </button>
-            <button className="interaction-btn" title="Not interesting">
-              <span className="btn-icon-text">👁️</span>
-              <span className="btn-label">Not interesting</span>
-            </button>
-            <button className="interaction-btn" title="Mark as viewed">
-              <span className="btn-icon-text">👁️</span>
-              <span className="btn-label">Viewed</span>
-            </button>
-            <button className="interaction-btn" title="Share">
-              <span className="btn-icon-text">📤</span>
-              <span className="btn-label">Share</span>
-            </button>
-            <button className="interaction-btn" title="Report">
-              <span className="btn-icon-text">🚩</span>
-              <span className="btn-label">Report</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -333,12 +307,18 @@ const MovieDetail = () => {
       <div className="detail-content">
         {activeTab === 'overview' && (
           <div className="overview-section">
-            {movie.Plot && movie.Plot !== 'N/A' && (
+            {/* Plot/Overview - Ensure it's always shown if available */}
+            {movie.Plot && movie.Plot !== 'N/A' ? (
               <div className="plot-section">
-                <h3>Description</h3>
+                <h3>Overview</h3>
                 <p>{movie.Plot}</p>
               </div>
-            )}
+            ) : movie.overview && movie.overview !== 'N/A' ? (
+              <div className="plot-section">
+                <h3>Overview</h3>
+                <p>{movie.overview}</p>
+              </div>
+            ) : null}
             
             {genre.length > 0 && (
               <div className="genres-section">
@@ -371,12 +351,12 @@ const MovieDetail = () => {
               </div>
             )}
             
-            {/* Regular Actors (for non-AniList items) */}
+            {/* Regular Actors (for non-AniList items) - Always show if available */}
             {!movie.characters && actors.length > 0 && (
               <div className="actors-section">
                 <h3>Cast</h3>
                 <div className="actors-grid">
-                  {actors.slice(0, 8).map((actor, i) => (
+                  {actors.slice(0, 12).map((actor, i) => (
                     <div key={i} className="actor-card">
                       <div className="actor-avatar">{actor.charAt(0)}</div>
                       <span className="actor-name">{actor}</span>
