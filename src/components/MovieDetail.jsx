@@ -145,8 +145,20 @@ const MovieDetail = () => {
           streaming_sources_count: watchOptionsData.streaming_sources?.length || 0,
           streaming_sources: watchOptionsData.streaming_sources,
           can_watch_directly: watchOptionsData.can_watch_directly,
-          primary_platform: watchOptionsData.primary_platform
+          primary_platform: watchOptionsData.primary_platform,
+          has_youtube: watchOptionsData.streaming_sources?.some(s => 
+            s.platform === 'YouTube' || s.name === 'YouTube' || s.source === 'youtube'
+          ) || false
         })
+        
+        // If no streaming sources but we have watch options, log it
+        if (!watchOptionsData.streaming_sources || watchOptionsData.streaming_sources.length === 0) {
+          console.warn('⚠️ No streaming sources found for movie:', {
+            imdbId,
+            title: movieData?.Title,
+            watchOptionsData
+          })
+        }
       }
       setYoutube(youtubeData || { youtube_trailers: [], youtube_music_videos: [] })
     } catch (error) {
@@ -158,7 +170,30 @@ const MovieDetail = () => {
   }
 
   const handleStreamingClick = (source) => {
-    // Prioritize web_url, then direct_watch_url, then platform-specific URLs
+    // Check if it's a YouTube source - play in modal instead of opening new tab
+    const isYouTube = source.platform === 'YouTube' || source.name === 'YouTube' || 
+                     source.source === 'youtube' || 
+                     source.youtube_embed_url || source.youtube_video_id ||
+                     (source.url && (source.url.includes('youtube.com') || source.url.includes('youtu.be')))
+    
+    if (isYouTube) {
+      // Play YouTube video in modal (like trailers)
+      const embedUrl = source.youtube_embed_url || 
+                      (source.youtube_video_id ? `https://www.youtube.com/embed/${source.youtube_video_id}` : null) ||
+                      getYouTubeEmbedUrl(source.web_url || source.direct_watch_url || source.url)
+      
+      if (embedUrl) {
+        setSelectedVideo({
+          url: source.web_url || source.direct_watch_url || source.url,
+          embed_url: embedUrl,
+          title: source.youtube_title || source.name || `${movie?.Title} - Full Movie`
+        })
+        setShowTrailer(true)
+        return
+      }
+    }
+    
+    // For non-YouTube sources, open in new tab
     if (source.web_url) {
       window.open(source.web_url, '_blank')
     } else if (source.direct_watch_url) {
@@ -171,14 +206,6 @@ const MovieDetail = () => {
       window.open(source.ios_url, '_blank')
     } else if (source.platform_url) {
       window.open(source.platform_url, '_blank')
-    } else if (source.youtube_embed_url || source.youtube_video_id) {
-      // Handle YouTube links
-      const youtubeUrl = source.youtube_embed_url || 
-                        `https://www.youtube.com/watch?v=${source.youtube_video_id}` ||
-                        source.youtube_url
-      if (youtubeUrl) {
-        window.open(youtubeUrl, '_blank')
-      }
     }
   }
 
@@ -385,7 +412,7 @@ const MovieDetail = () => {
               >
                 <span className="download-icon">🎬</span>
                 Trailer
-              </button>
+            </button>
             )}
           </div>
           
@@ -570,7 +597,7 @@ const MovieDetail = () => {
                         onClick={() => watchUrl && handleStreamingClick(source)}
                         style={{ cursor: watchUrl ? 'pointer' : 'default' }}
                       >
-                        <div className="platform-icon">
+                      <div className="platform-icon">
                           {getPlatformIcon(source.platform || source.name)}
                         </div>
                         <div className="platform-info">
@@ -589,9 +616,28 @@ const MovieDetail = () => {
                             {source.price && !source.price_display && (
                               <span className="platform-price">${source.price}</span>
                             )}
+                            {(() => {
+                              const isYouTube = source.platform === 'YouTube' || source.name === 'YouTube' || 
+                                               source.source === 'youtube' || 
+                                               source.youtube_embed_url || source.youtube_video_id ||
+                                               (watchUrl && (watchUrl.includes('youtube.com') || watchUrl.includes('youtu.be')))
+                              return isYouTube && watchUrl ? (
+                                <span className="watch-here-badge">▶ Watch Here</span>
+                              ) : null
+                            })()}
                           </div>
                         </div>
-                        {watchUrl && <div className="platform-arrow">→</div>}
+                        {watchUrl && (
+                          <div className="platform-arrow">
+                            {(() => {
+                              const isYouTube = source.platform === 'YouTube' || source.name === 'YouTube' || 
+                                               source.source === 'youtube' || 
+                                               source.youtube_embed_url || source.youtube_video_id ||
+                                               (watchUrl && (watchUrl.includes('youtube.com') || watchUrl.includes('youtu.be')))
+                              return isYouTube ? '▶' : '→'
+                            })()}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -604,6 +650,13 @@ const MovieDetail = () => {
                   {streaming.streaming_sources.map((source, i) => {
                     const watchUrl = source.web_url || source.url || source.android_url || source.playstore_url ||
                                    source.youtube_url || (source.youtube_video_id ? `https://www.youtube.com/watch?v=${source.youtube_video_id}` : null)
+                    
+                    // Check if it's YouTube
+                    const isYouTube = source.platform === 'YouTube' || source.name === 'YouTube' || 
+                                     source.source === 'youtube' || 
+                                     source.youtube_embed_url || source.youtube_video_id ||
+                                     (watchUrl && (watchUrl.includes('youtube.com') || watchUrl.includes('youtu.be')))
+                    
                     return (
                       <div 
                         key={i} 
@@ -613,22 +666,29 @@ const MovieDetail = () => {
                       >
                         <div className="platform-icon">
                           {getPlatformIcon(source.platform || source.name)}
-                        </div>
-                        <div className="platform-info">
+                      </div>
+                      <div className="platform-info">
                           <h4>{source.platform || source.name || 'Unknown Platform'}</h4>
-                          <div className="platform-meta">
+                        <div className="platform-meta">
                             <span className={`platform-type ${source.type || ''}`}>
-                              {source.type === 'free' ? 'Free' : 
-                               source.type === 'subscription' ? 'Subscription' :
+                            {source.type === 'free' ? 'Free' : 
+                             source.type === 'subscription' ? 'Subscription' :
                                source.type === 'rental' ? 'Rent' : 
                                source.type === 'buy' ? 'Buy' : 'Watch'}
-                            </span>
-                            {source.price_display && (
-                              <span className="platform-price">{source.price_display}</span>
+                          </span>
+                          {source.price_display && (
+                            <span className="platform-price">{source.price_display}</span>
+                          )}
+                            {isYouTube && watchUrl && (
+                              <span className="watch-here-badge">▶ Watch Here</span>
                             )}
                           </div>
                         </div>
-                        {watchUrl && <div className="platform-arrow">→</div>}
+                        {watchUrl && (
+                          <div className="platform-arrow">
+                            {isYouTube ? '▶' : '→'}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -649,8 +709,8 @@ const MovieDetail = () => {
             {(() => {
               // Get embed URL - try embed_url first, then convert url to embed, or use trailer
               let embedUrl = selectedVideo.embed_url || 
-                            getYouTubeEmbedUrl(selectedVideo.url) || 
-                            getYouTubeEmbedUrl(selectedVideo.trailer)
+                              getYouTubeEmbedUrl(selectedVideo.url) || 
+                              getYouTubeEmbedUrl(selectedVideo.trailer)
               
               // Enhance YouTube URL with better controls
               embedUrl = enhanceYouTubeUrl(embedUrl)
@@ -658,13 +718,13 @@ const MovieDetail = () => {
               if (embedUrl) {
                 return (
                   <div className="video-player-container">
-                    <iframe
-                      src={embedUrl}
-                      title={selectedVideo.title || 'Video'}
-                      frameBorder="0"
+                  <iframe
+                    src={embedUrl}
+                    title={selectedVideo.title || 'Video'}
+                    frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                      allowFullScreen
-                      className="video-iframe"
+                    allowFullScreen
+                    className="video-iframe"
                       id={`youtube-player-${Date.now()}`}
                     />
                     <div className="video-controls-overlay">
