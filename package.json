@@ -13,7 +13,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm exec -- vite build",
+    "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview"
   }
 }
