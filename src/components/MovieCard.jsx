@@ -6,8 +6,12 @@ const MovieCard = ({ movie, large = false, onClick }) => {
   const navigate = useNavigate()
   const [imageError, setImageError] = useState(false)
   const poster = movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : null
+  // Get rating from multiple possible sources
   const rating = movie.imdbRating && movie.imdbRating !== 'N/A' ? movie.imdbRating : 
-                 movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) : null
+                 movie.tmdb_vote_average ? movie.tmdb_vote_average.toFixed(1) :
+                 movie.Ratings && movie.Ratings.length > 0 && movie.Ratings[0].Value ? movie.Ratings[0].Value :
+                 movie.rating ? movie.rating :
+                 null
 
   const handleImageError = () => {
     setImageError(true)

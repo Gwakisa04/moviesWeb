@@ -135,14 +135,26 @@ const Music = () => {
 
   const enhanceYouTubeUrl = (url) => {
     if (!url) return url
-    // Add YouTube API parameters for better controls
+    // Add YouTube API parameters for better controls and quality options
     if (url.includes('youtube.com/embed/')) {
-      // Check if parameters already exist
-      if (!url.includes('?')) {
-        return `${url}?enablejsapi=1&controls=1&rel=0&modestbranding=1`
-      } else if (!url.includes('enablejsapi')) {
-        return `${url}&enablejsapi=1&controls=1&rel=0&modestbranding=1`
-      }
+      // Extract video ID first
+      let videoId = url.match(/embed\/([^?&]+)/)?.[1]
+      if (!videoId) return url
+      
+      // Build URL with all necessary parameters for full functionality
+      const params = new URLSearchParams()
+      params.set('enablejsapi', '1')
+      params.set('controls', '1') // Show controls
+      params.set('rel', '0') // Don't show related videos
+      params.set('modestbranding', '1') // Less YouTube branding
+      params.set('playsinline', '1') // Play inline on mobile
+      params.set('fs', '1') // Allow fullscreen
+      params.set('iv_load_policy', '3') // Hide annotations
+      params.set('cc_load_policy', '0') // No captions by default
+      params.set('autoplay', '0') // Don't autoplay
+      params.set('origin', window.location.origin) // Set origin for API
+      
+      return `https://www.youtube.com/embed/${videoId}?${params.toString()}`
     }
     return url
   }
@@ -210,6 +222,10 @@ const Music = () => {
               embedUrl = enhanceYouTubeUrl(embedUrl)
               
               if (embedUrl) {
+                // Extract video ID for YouTube API
+                const videoIdMatch = embedUrl.match(/embed\/([^?&]+)/)
+                const videoId = videoIdMatch ? videoIdMatch[1] : null
+                
                 return (
                   <div className="video-player-container">
                     <iframe
@@ -219,6 +235,21 @@ const Music = () => {
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                       allowFullScreen
                       className="video-iframe"
+                      id={`youtube-player-${videoId || Date.now()}`}
+                      onLoad={() => {
+                        // Ensure YouTube controls are fully loaded
+                        if (window.YT && window.YT.Player && videoId) {
+                          try {
+                            const iframe = document.getElementById(`youtube-player-${videoId}`)
+                            if (iframe && !iframe.dataset.playerInitialized) {
+                              // Mark as initialized to prevent multiple initializations
+                              iframe.dataset.playerInitialized = 'true'
+                            }
+                          } catch (e) {
+                            console.log('YouTube API initialization:', e)
+                          }
+                        }
+                      }}
                     />
                     <div className="video-controls-overlay">
                       <div className="video-controls-bar">

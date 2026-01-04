@@ -111,8 +111,22 @@ const MovieDetail = () => {
       const watchOptionsData = results[1].status === 'fulfilled' ? results[1].value : null
       const youtubeData = results[2].status === 'fulfilled' ? results[2].value : { youtube_trailers: [], youtube_music_videos: [] }
       
+      // Check if movie was found
       if (!movieData || movieData.Response === 'False') {
-        // Movie not found
+        // Try to get more info about the error
+        const error = results[0].status === 'rejected' ? results[0].reason : null
+        console.error('Movie not found:', {
+          imdbId,
+          error: error?.response?.data?.detail || error?.message || 'Unknown error',
+          movieData
+        })
+        setMovie(null)
+        return
+      }
+      
+      // Ensure movie has at least basic data
+      if (!movieData.Title) {
+        console.warn('Movie data missing Title:', movieData)
         setMovie(null)
         return
       }
@@ -220,14 +234,26 @@ const MovieDetail = () => {
 
   const enhanceYouTubeUrl = (url) => {
     if (!url) return url
-    // Add YouTube API parameters for better controls
+    // Add YouTube API parameters for better controls and quality options
     if (url.includes('youtube.com/embed/')) {
-      // Check if parameters already exist
-      if (!url.includes('?')) {
-        return `${url}?enablejsapi=1&controls=1&rel=0&modestbranding=1`
-      } else if (!url.includes('enablejsapi')) {
-        return `${url}&enablejsapi=1&controls=1&rel=0&modestbranding=1`
-      }
+      // Extract video ID first
+      let videoId = url.match(/embed\/([^?&]+)/)?.[1]
+      if (!videoId) return url
+      
+      // Build URL with all necessary parameters for full functionality
+      const params = new URLSearchParams()
+      params.set('enablejsapi', '1')
+      params.set('controls', '1') // Show controls
+      params.set('rel', '0') // Don't show related videos
+      params.set('modestbranding', '1') // Less YouTube branding
+      params.set('playsinline', '1') // Play inline on mobile
+      params.set('fs', '1') // Allow fullscreen
+      params.set('iv_load_policy', '3') // Hide annotations
+      params.set('cc_load_policy', '0') // No captions by default
+      params.set('autoplay', '0') // Don't autoplay
+      params.set('origin', window.location.origin) // Set origin for API
+      
+      return `https://www.youtube.com/embed/${videoId}?${params.toString()}`
     }
     return url
   }
@@ -268,9 +294,20 @@ const MovieDetail = () => {
       <div className="movie-detail-error">
         <div className="error-content">
           <h2>Movie not found</h2>
-          <p>The movie you're looking for couldn't be loaded. It may not be available in our database.</p>
+          <p>
+            The movie with ID <strong>{imdbId}</strong> couldn't be loaded.
+            {imdbId && (
+              <>
+                <br />
+                <small style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '14px', display: 'block', marginTop: '10px' }}>
+                  This might be from a different source. Try searching for the movie instead.
+                </small>
+              </>
+            )}
+          </p>
           <div className="error-actions">
             <button className="btn-primary" onClick={() => navigate('/')}>Go Home</button>
+            <button className="btn-secondary" onClick={() => navigate('/browse')}>Browse Movies</button>
             <button className="btn-secondary" onClick={() => navigate(-1)}>Go Back</button>
           </div>
         </div>
@@ -628,6 +665,7 @@ const MovieDetail = () => {
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                       allowFullScreen
                       className="video-iframe"
+                      id={`youtube-player-${Date.now()}`}
                     />
                     <div className="video-controls-overlay">
                       <div className="video-controls-bar">
